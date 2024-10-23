@@ -1,7 +1,7 @@
-Librería especializada para el microcontrolador MSP430FG479. 
+HAL for the MSP430FG479. Only some modules have been implemented.
 
-Módulos creados:
+Modules already done:
+- Toggle led of the develop board
 
-
-Módulos en creación:
-- ADC
+Modules planned to be done:
+- SD16_A

@@ -64,7 +64,7 @@
 //  Texas Instruments Inc.
 //  September 2008
 //  Built with IAR Embedded Workbench V4.11A and CCE V3.2
-//*****************************************************************************
+
 #include <msp430.h>
 #include <stdint.h>
 const uint16_t cuenta = 30000;
