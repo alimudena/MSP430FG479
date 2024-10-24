@@ -27,12 +27,12 @@ void toggle_pin(){
 //*****************************************************************************
 /*TIMER BASIC USAGE*/
 //*****************************************************************************
-
+/*
 void timer_A(uint16_t timer_A_count){
     CCTL0 |= CCIE;                             // CCR0 interrupt enabled
     CCR0 = timer_A_count;                             // Quantity counted by Timer_A before interrupting
     TACTL |= TASSEL_2 | MC_2;                  // SMCLK, continuous mode
 }
 
-
+*/
 
