@@ -129,8 +129,6 @@ void __attribute__ ((interrupt(SD16A_VECTOR))) SD16ISR (void)
   switch (SD16IV)
   {
   case 2:                                   // SD16MEM Overflow
-    m = 2;
-    break;
   case 4:                                   // SD16MEM0 IFG
     results[index] = SD16MEM0;              // Save CH0 results (clears IFG)
     if (++index == Num_of_Results)

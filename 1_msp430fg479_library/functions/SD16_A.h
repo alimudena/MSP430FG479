@@ -17,13 +17,21 @@ void clk_reference(); //TODO
 
 void voltage_reference(char v_reference);
 
-void gain_setup(int gain); //TODO
+void gain_setup(int gain); 
 
 //*****************************************************************************
 /*SELECTION OF THE CONVERSION MODE*/
 //*****************************************************************************
 
-void conversion_mode();
+void conversion_mode(char conv_mode);
+void start_conversion(void);
+void stop_conversion(void);
+
+//*****************************************************************************
+/*OUTPUT DATA FORMAT*/
+//*****************************************************************************
+void data_format(char polarity, char sign);
+
 
 //*****************************************************************************
 /*ENTERING LOW POWER MODE*/
@@ -37,7 +45,5 @@ void enter_LPM();
 //*****************************************************************************
 /*INTERRUPTION HANDLING*/
 //*****************************************************************************
-
-void interruption_handler();
 
 

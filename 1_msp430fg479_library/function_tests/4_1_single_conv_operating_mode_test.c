@@ -27,29 +27,29 @@ int main(void){
     voltage_reference(v_ref);                   
 
     SD16CTL |= SD16SSEL0;                     // SMCLK
-    SD16CCTL0 |= SD16SNGL+SD16IE ;            // Single conv, enable interrupt
+    SD16CCTL0 |= SD16IE;            //Enable interrupt
 
 
-    ////SUT
-    volatile unsigned int gain = 32;
+    volatile unsigned int gain = 1;
     gain_setup(gain);
-    ////SUT end
+ 
+    ////SUT
+    conversion_mode('S');
+   ////SUT end
 
 
     SD16INCTL0 |= SD16INTDLY_0;               // Interrupt on 4th sample  
     for (i = 0; i < 0x3600; i++);             // Delay for 1.2V ref startup
 
     while(1){
-        SD16CCTL0 |= SD16SC;                    // SET BREAKPOINT HERE
-                                            // Set bit to start conversion
+        start_conversion();
         
-
         //enter_LPM();
+        toggle_pin();
         __bis_SR_register(LPM0_bits+GIE);
-    };
+    };    
 
 }
-
 
 #if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
 #pragma vector=SD16A_VECTOR
@@ -65,12 +65,11 @@ void __attribute__ ((interrupt(SD16A_VECTOR))) SD16ISR (void)
   case 2:                                   // SD16MEM Overflow
     break;
   case 4:                                   // SD16MEM0 IFG
-    //result = read_analog_input();                      // Save CH0 results (clears IFG)
-    result = SD16MEM0;
-    toggle_pin();
+    result = SD16MEM0;                      // Save CH0 results (clears IFG)
     break;
   }
 
-    __bic_SR_register_on_exit(LPM0_bits); 
+  __bic_SR_register_on_exit(LPM0_bits);                   // Exit LPM0
 }
+
 

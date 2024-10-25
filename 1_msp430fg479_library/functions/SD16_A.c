@@ -124,6 +124,88 @@ void gain_setup(int gain){
     }
 }
 
+//*****************************************************************************
+/*SELECTION OF THE CONVERSION MODE*/
+//*****************************************************************************
+
+void conversion_mode(char conv_mode){
+    // C: Continuous        
+    // S: Single
+    // First clean the related bits so to not make a mess
+    SD16CCTL0 &= ~(SD16SC | SD16SNGL);
+    switch(conv_mode) {
+            case 'C':
+                // Do not put SD16SNGL on
+                break;
+            
+            case 'S':
+                SD16CCTL0 |= SD16SNGL;
+                break;
+            default:
+                perror("Error: Conversion Mode not contemplated.");
+                break;
+    
+    }    
+
+}
+
+void start_conversion(void){
+    SD16CCTL0 |= SD16SC;                      // Set bit to start conversion
+}
+
+void stop_conversion(void){
+    SD16CCTL0 &= ~SD16SC;
+}
+
+
+//*****************************************************************************
+/*OUTPUT DATA FORMAT*/
+//*****************************************************************************
+void data_format(char polarity, char sign){
+    // Polarity:
+        // U : Unipolar
+        // B : Bipolar
+
+    // Sign:
+        // O : Offset
+        // C : 2's complement        
+    //Clear bits to not make a mess
+    SD16CCTL0 &= ~(SD16UNI | SD16DF);
+    switch(polarity) {
+        case 'B':
+            switch (sign) {
+                case 'O':
+                    SD16CCTL0 &= ~(SD16UNI | SD16DF);
+                    break;
+                case 'C':
+                    SD16CCTL0 |= SD16DF;
+                    break;      
+                default:
+                    perror("Error: Data Format not contemplated.");
+                    break;
+            }
+            break;
+        case 'U':
+            switch (sign) {
+                case 'O':
+                    SD16CCTL0 |= SD16UNI;
+                    break;        
+                case 'C':
+                    perror("Error: Unipolar data format can't represent 2's complement.");
+                    break;
+                default:
+                    perror("Error: Data Format not contemplated.");
+                    break;
+            }
+            break;
+        default:
+            perror("Error: Data Format not contemplated.");
+            break;
+    
+    }
+
+}
+
 
 //*****************************************************************************
 /*ENTERING LOW POWER MODE*/
