@@ -12,11 +12,21 @@ int main(void){
     stop_wd();
 
     //setup pin for led for toggle
-    toggle_setup();
+  //  toggle_setup();
 
-        
-    select_analog_input(0);
-    
+
+    ////SUT
+
+    volatile unsigned int analog_input = 2;
+
+    // Setup and selection of the Analog input wanted
+    setup_analog_input(analog_input);
+    select_analog_input(analog_input);
+
+    ////SUT end
+
+
+
     FLL_CTL0 |= XCAP14PF;                     // Configure load caps TODO
     for (i = 0; i < 10000; i++);              // Delay for 32 kHz crystal to
     SD16CTL |= SD16REFON+SD16SSEL0;            // 1.2V ref, SMCLK
@@ -27,7 +37,7 @@ int main(void){
     while(1){
         SD16CCTL0 |= SD16SC;                    // SET BREAKPOINT HERE
                                             // Set bit to start conversion
-        toggle_pin();
+    //    toggle_pin();
         enter_LPM();
     };
 

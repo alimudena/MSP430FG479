@@ -23,24 +23,29 @@ int main(void){
     FLL_CTL0 |= XCAP14PF;                     // Configure load caps TODO
     for (i = 0; i < 10000; i++);              // Delay for 32 kHz crystal to
     
-    
-    ////SUT
-    static const char v_ref = 'I';                           // I: Internal (1.2V), O: Off-chip, E: External
+    static const char v_ref = 'I';            // I: Internal (1.2V), O: Off-chip, E: External
     voltage_reference(v_ref);                   
-    ////SUT end
-    
-    
-    
+
     SD16CTL |= SD16SSEL0;                     // SMCLK
     SD16CCTL0 |= SD16SNGL+SD16IE ;            // Single conv, enable interrupt
+
+
+    ////SUT
+    volatile unsigned int gain = 8;
+    gain_setup(gain);
+    ////SUT end
+
+
     SD16INCTL0 |= SD16INTDLY_0;               // Interrupt on 4th sample  
     for (i = 0; i < 0x3600; i++);             // Delay for 1.2V ref startup
 
     while(1){
         SD16CCTL0 |= SD16SC;                    // SET BREAKPOINT HERE
                                             // Set bit to start conversion
-        toggle_pin();
-        enter_LPM();
+        
+
+        //enter_LPM();
+        __bis_SR_register(LPM0_bits+GIE);
     };
 
 }
@@ -62,6 +67,7 @@ void __attribute__ ((interrupt(SD16A_VECTOR))) SD16ISR (void)
   case 4:                                   // SD16MEM0 IFG
     //result = read_analog_input();                      // Save CH0 results (clears IFG)
     result = SD16MEM0;
+    toggle_pin();
     break;
   }
 

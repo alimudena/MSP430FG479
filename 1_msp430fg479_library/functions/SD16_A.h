@@ -4,6 +4,7 @@
 /*SELECTING AND READING THE CHANNEL*/
 //*****************************************************************************
 
+void setup_analog_input(int channel);
 void select_analog_input(int channel);
 
 int read_analog_input();
@@ -16,7 +17,7 @@ void clk_reference(); //TODO
 
 void voltage_reference(char v_reference);
 
-void gain_setup(); //TODO
+void gain_setup(int gain); //TODO
 
 //*****************************************************************************
 /*SELECTION OF THE CONVERSION MODE*/
