@@ -90,10 +90,10 @@ int main(void)
                                             // by compiler optimization
 
   WDTCTL = WDTPW | WDTHOLD;                 // Stop WDT
-  
   P6SEL |= BIT0+BIT1;			    // Config SD16 inputs 
   
   FLL_CTL0 |= XCAP14PF;                     // Configure load caps
+
   for (i = 0; i < 10000; i++);              // Delay for 32 kHz crystal to
                                             // stabilize
 
@@ -113,7 +113,7 @@ int main(void)
 #if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
 #pragma vector=SD16A_VECTOR
 __interrupt void SD16ISR(void)
-#elif defined(__GNUC__)A
+#elif defined(__GNUC__)
 void __attribute__ ((interrupt(SD16A_VECTOR))) SD16ISR (void)
 #else
 #error Compiler not supported!
