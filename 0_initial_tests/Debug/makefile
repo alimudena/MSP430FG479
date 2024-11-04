@@ -12,7 +12,6 @@ GEN_CMDS__FLAG :=
 ORDERED_OBJS += \
 "./functions/general_functions.obj" \
 "./functions/testing_functions.c/toggle_led_MSP-TS430PN80.obj" \
-"../lnk_msp430fg479.cmd" \
 $(GEN_CMDS__FLAG) \
 -llibc.a \
 
@@ -23,10 +22,8 @@ RMDIR := RMDIR /S/Q
 
 # All of the sources participating in the build are defined here
 -include sources.mk
--include subdir_vars.mk
 -include functions/subdir_vars.mk
 -include functions/testing_functions.c/subdir_vars.mk
--include subdir_rules.mk
 -include functions/subdir_rules.mk
 -include functions/testing_functions.c/subdir_rules.mk
 -include objects.mk
@@ -132,11 +129,11 @@ EXE_OUTPUTS__QUOTED += \
 
 
 # All Target
-all: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
+all: $(OBJS) $(GEN_CMDS)
 	@$(MAKE) --no-print-directory -Onone "MSP430FG479.out"
 
 # Tool invocations
-MSP430FG479.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
+MSP430FG479.out: $(OBJS) $(GEN_CMDS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: MSP430 Linker'
 	"C:/ti/ccstheia151/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/bin/cl430" -vmsp --use_hw_mpy=none --advice:power=all --define=__MSP430FG479__ -g --printf_support=minimal --diag_warning=225 --diag_wrap=off --display_error_number --silicon_errata=CPU19 -z -m"MSP430FG479.map" --heap_size=80 --stack_size=80 -i"C:/ti/ccstheia151/ccs/ccs_base/msp430/include" -i"C:/ti/ccstheia151/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/lib" -i"C:/ti/ccstheia151/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include" --reread_libs --diag_wrap=off --display_error_number --warn_sections --xml_link_info="MSP430FG479_linkInfo.xml" --use_hw_mpy=none --rom_model -o "MSP430FG479.out" $(ORDERED_OBJS)

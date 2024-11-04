@@ -24,9 +24,17 @@ int main(void){
     for (i = 0; i < 10000; i++);              // Delay for 32 kHz crystal to
     
     static const char v_ref = 'I';            // I: Internal (1.2V), O: Off-chip, E: External
-    voltage_reference(v_ref);                   
+    voltage_reference(v_ref);
+    
+    //SUT
+    static const char clk_ref = 'S';
+    volatile unsigned int clk_div_1 = 1;
+    volatile unsigned int clk_div_2 = 1;
+    clk_reference(clk_ref); // M: MCLK, S: SCLK, A: ACLK, T:TACLK
+    fM_dividers(clk_div_1, clk_div_2);
+    //SUT end        
 
-    SD16CTL |= SD16SSEL0;                     // SMCLK
+
     SD16CCTL0 |= SD16IE;            //Enable interrupt
 
     volatile unsigned int gain = 1;
@@ -35,12 +43,10 @@ int main(void){
     static const char conv_mode = 'S'; // C: Continuous  S: Single
     conversion_mode(conv_mode); 
 
-    //SUT
     static const char polarity = 'B';       // B : Bipolar, U : unipolar
     static const char sign = 'O';           // O : Offset, C : 2's complement
 
     data_format(polarity, sign);
-    //SUT end
 
     SD16INCTL0 |= SD16INTDLY_0;               // Interrupt on 4th sample  
     for (i = 0; i < 0x3600; i++);             // Delay for 1.2V ref startup

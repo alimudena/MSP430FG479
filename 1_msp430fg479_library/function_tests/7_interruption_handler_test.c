@@ -1,6 +1,7 @@
 #include <msp430.h>
 #include <stdio.h>
 #include <stdint.h>  // Necesario para uint16_t
+#include <stdbool.h> // Necesario para boolean
 #include "../functions/general_functions.h"
 #include "../functions/SD16_A.h"
 
@@ -14,7 +15,7 @@ int main(void){
     //setup pin for led for toggle
     toggle_setup();
 
-    volatile unsigned int analog_input = 0;
+    static const unsigned int analog_input = 0;
     
     // Setup and selection of the Analog input wanted
     setup_analog_input(analog_input);
@@ -24,34 +25,56 @@ int main(void){
     for (i = 0; i < 10000; i++);              // Delay for 32 kHz crystal to
     
     static const char v_ref = 'I';            // I: Internal (1.2V), O: Off-chip, E: External
-    voltage_reference(v_ref);                   
-
-    SD16CTL |= SD16SSEL0;                     // SMCLK
-    SD16CCTL0 |= SD16IE;            //Enable interrupt
-
-    volatile unsigned int gain = 1;
+    voltage_reference(v_ref);
+    
+    
+    static const char clk_ref = 'S';
+    static const unsigned int clk_div_1 = 1;
+    static const unsigned int clk_div_2 = 1;
+    clk_reference(clk_ref); // M: MCLK, S: SMCLK, A: ACLK, T:TACLK
+    fM_dividers(clk_div_1, clk_div_2);
+    
+    //SUT
+    bool const interruption = false;
+    enable_interruption(interruption);
+    //SUT end
+    
+    static const int gain = 1;
     gain_setup(gain);
     
     static const char conv_mode = 'S'; // C: Continuous  S: Single
     conversion_mode(conv_mode); 
 
-    //SUT
     static const char polarity = 'B';       // B : Bipolar, U : unipolar
     static const char sign = 'O';           // O : Offset, C : 2's complement
 
     data_format(polarity, sign);
-    //SUT end
 
-    SD16INCTL0 |= SD16INTDLY_0;               // Interrupt on 4th sample  
+    
+
     for (i = 0; i < 0x3600; i++);             // Delay for 1.2V ref startup
 
     while(1){
         start_conversion();
         
-        //enter_LPM();
+
         toggle_pin();
-       // fprintf(stdout, "Resultado de la conversión: %d\n", result);
-       // __bis_SR_register(LPM0_bits+GIE);
+        
+        //SUT
+        
+        switch (interruption) {
+            case false:// if IFG polling is being used:
+                result = IFG_polling();
+                break;
+            case true:// if interruption is being used:
+                __bis_SR_register(LPM0_bits+GIE); // Enter LPM
+                break;
+            default:
+                perror("Error: interruption enabling used wrong");
+                break;
+        }
+         
+        //SUT end
 
     };    
 
@@ -75,7 +98,7 @@ void __attribute__ ((interrupt(SD16A_VECTOR))) SD16ISR (void)
     break;
   }
 
-  //__bic_SR_register_on_exit(LPM0_bits);                   // Exit LPM0
+  __bic_SR_register_on_exit(LPM0_bits);                   // Exit LPM0
 }
 
 

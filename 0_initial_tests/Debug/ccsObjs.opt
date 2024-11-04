@@ -1,4 +1,3 @@
 "./functions/general_functions.obj"
 "./functions/testing_functions.c/toggle_led_MSP-TS430PN80.obj"
-"../lnk_msp430fg479.cmd"
 -llibc.a

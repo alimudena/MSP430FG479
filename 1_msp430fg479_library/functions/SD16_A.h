@@ -1,4 +1,5 @@
 #include <msp430.h>
+#include <stdbool.h> 
 
 //*****************************************************************************
 /*SELECTING AND READING THE CHANNEL*/
@@ -13,12 +14,14 @@ int read_analog_input();
 /*CONFIGURING THE REFERENCES*/
 //*****************************************************************************
 
-void clk_reference(); //TODO
-
 void voltage_reference(char v_reference);
 
 void gain_setup(int gain); 
 
+void clk_reference(char clk_ref);
+void fM_dividers(int div_1, int div_2);
+
+void config_OSR(int OSR);
 //*****************************************************************************
 /*SELECTION OF THE CONVERSION MODE*/
 //*****************************************************************************
@@ -43,7 +46,10 @@ void enter_LPM();
 
 
 //*****************************************************************************
-/*INTERRUPTION HANDLING*/
+/*INTERRUPTION CONFIGURATION*/
 //*****************************************************************************
 
 
+void enable_interruption(bool enable);
+
+int IFG_polling(void);

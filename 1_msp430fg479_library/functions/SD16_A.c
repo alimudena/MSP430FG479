@@ -4,6 +4,7 @@
 #include <stdint.h>  // Neccesary for  uint16_t
 #include "SD16_A.h"
 #include <assert.h>  // For using assert
+#include <stdbool.h> 
 
 
 
@@ -124,6 +125,109 @@ void gain_setup(int gain){
     }
 }
 
+
+void clk_reference(char clk_ref) {
+    // Clear for not making a mess
+    SD16CTL &= ~(SD16SSEL_0|SD16SSEL_1|SD16SSEL_2|SD16SSEL_3);
+    switch (clk_ref) {
+        case 'M':  // For 'MCLK'
+                SD16CTL |= SD16SSEL_0;
+            break;
+
+        case 'S':  // For 'SMCLK'
+                SD16CTL |= SD16SSEL_1;
+            break;
+
+        case 'A':  // For 'ACLK'
+                SD16CTL |= SD16SSEL_2;
+            break;
+
+        case 'T': // For 'TACLK'
+                SD16CTL |= SD16SSEL_3;
+            break;
+        default:
+            perror("Error: Not available clk reference, choose M: MCLK, S: SMCLK, A: ACLK, T:TACLK.");
+            break;
+    }
+}
+
+void fM_dividers(int div_1, int div_2){
+    SD16CTL &= ~(SD16DIV_0|SD16DIV_1|SD16DIV_2|SD16DIV_3);    
+    SD16CTL &= ~(SD16XDIV_0|SD16XDIV_1|SD16XDIV_2|SD16XDIV_3);    
+
+    switch (div_1) {
+        case 1:
+            SD16CTL |= SD16DIV_0;
+            break;
+        case 2:
+            SD16CTL |= SD16DIV_1;
+            break;
+        case 4:
+            SD16CTL |= SD16DIV_2;
+            break;
+        case 8:
+            SD16CTL |= SD16DIV_3;
+            break;
+
+        default:
+            perror("Error: Not available clk division, choose 1, 2, 4, 8.");
+            break;
+    }
+
+
+    switch (div_2) {
+        
+        case 1:
+            SD16CTL |= SD16XDIV_0;
+            break;
+        case 3:
+            SD16CTL |= SD16XDIV_1;
+            break;
+        case 16:
+            SD16CTL |= SD16XDIV_2;
+            break;
+        case 48:
+            SD16CTL |= SD16XDIV_3;
+            break;
+
+        default:
+            perror("Error: Not available clk division, choose 1, 3, 16, 48.");
+            break;
+    }
+    
+        
+}
+
+void config_OSR(int OSR){
+    // Clear bytes for not making a mess
+    SD16CCTL0 &= ~(SD16OSR_32|SD16OSR_64|SD16OSR_128|SD16OSR_256|SD16OSR_512|SD16OSR_1024);
+    switch (OSR) {
+        case 1:
+            break;
+        case 32:
+            SD16CCTL0|=SD16OSR_32;
+            break;
+        case 64:
+            SD16CCTL0|=SD16OSR_64;
+            break;
+        case 128:
+            SD16CCTL0|=SD16OSR_128;
+            break;
+        case 256:
+            SD16CCTL0|=SD16OSR_256;
+            break;
+        case 512:
+            SD16CCTL0|=SD16OSR_512;
+            break;
+        case 1024:
+            SD16CCTL0|=SD16OSR_1024;
+            break;
+        default: 
+            perror("Error: Not available OSR, choose 32, 64, 128, 256, 512, 1024.");
+            break;
+    }
+}
+
 //*****************************************************************************
 /*SELECTION OF THE CONVERSION MODE*/
 //*****************************************************************************
@@ -156,6 +260,8 @@ void start_conversion(void){
 void stop_conversion(void){
     SD16CCTL0 &= ~SD16SC;
 }
+
+
 
 
 //*****************************************************************************
@@ -206,6 +312,25 @@ void data_format(char polarity, char sign){
 
 }
 
+//*****************************************************************************
+/*INTERRUPTION CONFIGURATION*/
+//*****************************************************************************
+void enable_interruption(bool enable){
+    // Clear bits so to not make a mess
+    SD16CCTL0 &= ~(SD16IE); 
+
+    if (enable){
+        SD16CCTL0 |= SD16IE;            //Enable interrupt        
+    }
+
+    SD16INCTL0 |= SD16INTDLY_0;         // Interrupt on 4th sample  
+
+}
+
+int IFG_polling(void){
+    while ((SD16CCTL0 & SD16IFG)==0);       // Poll interrupt flag
+    return SD16MEM0;                     // Save CH0 results (clears IFG)
+}
 
 //*****************************************************************************
 /*ENTERING LOW POWER MODE*/
