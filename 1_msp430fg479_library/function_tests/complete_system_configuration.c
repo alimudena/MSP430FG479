@@ -15,52 +15,48 @@ int main(void){
     //setup pin for led for toggle
     toggle_setup();
 
+    // Variables necesarias para las configuraciones
+        // -- Entrada analógica
     static const unsigned int analog_input = 0;
-    
-    // Setup and selection of the Analog input wanted
+        // -- Tensión de referencia
+    static const char v_ref = 'I';            // I: Internal (1.2V), O: Off-chip, E: External
+        // -- Reloj de referencia
+    static const char clk_ref = 'S';          // M: MCLK, S: SMCLK, A: ACLK, T: TACLK
+        // -- Divisor de frecuencia de referencia
+    static const unsigned int clk_div_1 = 1;
+    static const unsigned int clk_div_2 = 1;
+        // -- Método de lectura: Polling o Interrupciones
+    bool const interruption = false;
+        // -- Over Sampling Ratio
+    static const unsigned int OSR = 1;
+        // -- Ganancia
+    static const int gain = 1;
+        // -- Método de conversión
+    static const char conv_mode = 'S'; // C: Continuous  S: Single
+        // -- Tipo de datos
+    static const char polarity = 'B';       // B : Bipolar, U : unipolar
+    static const char sign = 'O';           // O : Offset, C : 2's complement
+
+    // Llamadas a las funciones de configuración
     setup_analog_input(analog_input);
     select_analog_input(analog_input);
     
     FLL_CTL0 |= XCAP14PF;                     // Configure load caps
     for (i = 0; i < 10000; i++);              // Delay for 32 kHz crystal to
-    
-    static const char v_ref = 'I';            // I: Internal (1.2V), O: Off-chip, E: External
+
     voltage_reference(v_ref);
-    
-    
-    static const char clk_ref = 'S';
-    static const unsigned int clk_div_1 = 1;
-    static const unsigned int clk_div_2 = 1;
     clk_reference(clk_ref); // M: MCLK, S: SMCLK, A: ACLK, T:TACLK
     fM_dividers(clk_div_1, clk_div_2);
-    
-
-    bool const interruption = false;
     enable_interruption(interruption);
-
-    //SUT
-    static const unsigned int OSR = 1;
     config_OSR(OSR);
-    //SUT end
-
-    static const int gain = 1;
-    gain_setup(gain);
-    
-    static const char conv_mode = 'S'; // C: Continuous  S: Single
+    gain_setup(gain);    
     conversion_mode(conv_mode); 
-
-    static const char polarity = 'B';       // B : Bipolar, U : unipolar
-    static const char sign = 'O';           // O : Offset, C : 2's complement
-
     data_format(polarity, sign);
-
-    
 
     for (i = 0; i < 0x3600; i++);             // Delay for 1.2V ref startup
 
     while(1){
         start_conversion();
-        
 
         toggle_pin();
 
