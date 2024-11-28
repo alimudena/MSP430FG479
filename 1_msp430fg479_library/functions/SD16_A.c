@@ -268,13 +268,14 @@ void stop_conversion(void){
 /*OUTPUT DATA FORMAT*/
 //*****************************************************************************
 void data_format(char polarity, char sign){
-    // Polarity:
-        // U : Unipolar
-        // B : Bipolar
+    /* Polarity:
+        U : Unipolar
+        B : Bipolar
 
-    // Sign:
-        // O : Offset
-        // C : 2's complement        
+        Sign:
+        O : Offset
+        C : 2's complement      
+        */  
     //Clear bits to not make a mess
     SD16CCTL0 &= ~(SD16UNI | SD16DF);
     switch(polarity) {
