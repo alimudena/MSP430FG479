@@ -79,7 +79,7 @@ void select_reference_MCLK(char clk_ref_MCLK){
     }    
 }
 
-void configure_N_for_MCLK(int N){
+void configure_N_for_MCLK (int N_MCLK) {
     /*2 --> fMCLK=2*fACLK          1+1 to 127+1 is possible */
     /*4 --> fMCLK=4*fACLK */
     /*8 --> fMCLK=8*fACLK */
@@ -87,10 +87,10 @@ void configure_N_for_MCLK(int N){
     /*32 --> fMCLK=32*fACLK */
     /*64 --> fMCLK=64*fACLK */
     /*128 --> fMCLK=128*fACLK */
-/*    
+    
     // clear bits     
     SCFQCTL &= ~(SCFQ_64K|SCFQ_128K|SCFQ_256K|SCFQ_512K|SCFQ_1M|SCFQ_2M|SCFQ_4M);
-    switch(N){
+    switch(N_MCLK){
         case 2:
             SCFQCTL |= SCFQ_64K;
             break;
@@ -116,7 +116,7 @@ void configure_N_for_MCLK(int N){
             perror("Error: the chosen N for MCLK is not available.");
             break;  
     }
-*/
+
 }
 
 
@@ -153,18 +153,73 @@ void select_reference_SMCLK(char clk_ref_SMCLK){
 //*****************************************************************************
 
 /*
-void protection_cpu_required(int f_osc_ext);
-
-void LFXT1_working_mode();
 void LFXT1_disabled();
 */
-void LFXT1_cap_config(){
+void LFXT1_internal_cap_config(int LFXT1_int_cap){
+    /*0  --> XIN Cap = XOUT Cap = 0pf */
+    /*10 --> XIN Cap = XOUT Cap = 10pf */
+    /*14 --> XIN Cap = XOUT Cap = 14pf */
+    /*18 --> XIN Cap = XOUT Cap = 18pf */
+    //Clear bits 
+    FLL_CTL0 &= ~(XCAP0PF|XCAP10PF|XCAP14PF|XCAP18PF);
+    switch (LFXT1_int_cap) {
+        case 0:
+            FLL_CTL0 |= XCAP0PF;
+            break;  
+        case 10:
+            FLL_CTL0 |= XCAP10PF;
+            break;  
+        case 14:
+            FLL_CTL0 |= XCAP14PF;
+            break;  
+        case 18:
+            FLL_CTL0 |= XCAP18PF;
+            break;  
+        default:
+            perror("Error: the chosen internal capacitance for LFXT1 is not available.");
+            break;  
+    }
 }    
+
+void LFXT1_working_mode(char Low_High_power_mode){
+    //Clear bits
+    FLL_CTL0 &= ~(XTS_FLL);
+    switch (Low_High_power_mode) {
+        case 'L':
+
+        case 'H':
+            FLL_CTL0 |= XTS_FLL;
+            break;
+         default:
+            perror("Error: the working mode for LFXT1 is not possible.");
+            break;                    
+    }
+}
+
+void protection_cpu_required(bool osc_ext, int f_osc_ext){
+    // osc_ext: True if there is an external oscillator
+    // f_osc_ext: frequency of the external oscillator
+    //Clear bits
+    FLL_CTL0 &= ~(XT1OF);
+    // If the frequency of the external oscillator is below 450kHz prevent the CPU of being clocked from the external frequency
+    if (osc_ext) {
+        if (f_osc_ext < 450){
+            FLL_CTL0 |= XT1OF;
+        }        
+    }
+}
 
 //*****************************************************************************
 /*CONFIGURATION FOR XT2 OSCILLATOR*/
 //*****************************************************************************
 
+void LFXT2_disable(bool LFXT2_disabled){
+    // Clear bits
+    FLL_CTL1 &= ~(XT2OFF);
+    if (LFXT2_disabled){
+        FLL_CTL1 |= XT2OFF;        
+    }
+}
 
 
 //*****************************************************************************
