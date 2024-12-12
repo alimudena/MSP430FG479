@@ -80,6 +80,7 @@ void select_reference_MCLK(char clk_ref_MCLK){
 }
 
 void configure_N_for_MCLK (int N_MCLK) {
+    /*0 --> Disable*/
     /*2 --> fMCLK=2*fACLK          1+1 to 127+1 is possible */
     /*4 --> fMCLK=4*fACLK */
     /*8 --> fMCLK=8*fACLK */
@@ -91,6 +92,9 @@ void configure_N_for_MCLK (int N_MCLK) {
     // clear bits     
     SCFQCTL &= ~(SCFQ_64K|SCFQ_128K|SCFQ_256K|SCFQ_512K|SCFQ_1M|SCFQ_2M|SCFQ_4M);
     switch(N_MCLK){
+        case 0://Disable DCO
+            SCFQCTL |= SCFQ_M;
+            break;
         case 2:
             SCFQCTL |= SCFQ_64K;
             break;
@@ -128,15 +132,18 @@ void select_reference_SMCLK(char clk_ref_SMCLK){
     CLK references
         - D: DCO
         - X: XT2
+        - N: OFF
     */
     //Clear bits
-    FLL_CTL1 &= ~(SELS);
+    FLL_CTL1 &= ~(SELS|SMCLKOFF);
     switch (clk_ref_SMCLK) {
         case 'D':
             break;
         case 'X':
             FLL_CTL1 |= SELS;
             break;
+        case 'N':
+            FLL_CTL1 |= SMCLKOFF;
         default:
             perror("Error: the chosen reference for SMCLK is not available.");
             break;  
@@ -186,7 +193,7 @@ void LFXT1_working_mode(char Low_High_power_mode){
     FLL_CTL0 &= ~(XTS_FLL);
     switch (Low_High_power_mode) {
         case 'L':
-
+            break;
         case 'H':
             FLL_CTL0 |= XTS_FLL;
             break;
@@ -221,12 +228,11 @@ void LFXT2_disable(bool LFXT2_disabled){
     }
 }
 
-
 //*****************************************************************************
 /*CONFIGURATION FOR DCO*/
 //*****************************************************************************
 
-void configuring_DCO(bool DCOPLUS_on, int D_val, int N_val){
+void configuring_DCO(bool DCOPLUS_on, int D_val){
     // First clean the bits
     FLL_CTL0 &= ~(DCOPLUS);
     SCFI0 &= ~(FLLD_1 | FLLD_2 | FLLD_4 | FLLD_8);
@@ -251,28 +257,7 @@ void configuring_DCO(bool DCOPLUS_on, int D_val, int N_val){
                 break;
         }
     }
-
-    switch (N_val) {
-            case 1:
-                SCFI0 |= FLLD_1;
-                break;
-            case 2:
-                SCFI0 |= FLLD_2;
-                break;
-            case 4:
-                SCFI0 |= FLLD_4;
-                break;
-            case 8:
-                SCFI0 |= FLLD_8;
-                break;
-            default:
-                perror("Error: Not abailable configuration for N in DCO");
-            break;
-
-    }
-    
-
-    
+   
 }
 
 void DCO_f_range(int DCO_range){
@@ -283,6 +268,8 @@ void DCO_f_range(int DCO_range){
     // First clean bits
     SCFI0 &= ~(FN_2|FN_3|FN_4|FN_8);
     switch(DCO_range){
+        case 0:
+
         case 2:
             SCFI0 |= FN_2;
             break;

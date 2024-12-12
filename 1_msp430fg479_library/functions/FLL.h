@@ -50,7 +50,7 @@ void LFXT2_disable(bool LFXT2_disabled);
 /*CONFIGURATION FOR DCO*/
 //*****************************************************************************
 
-void configuring_DCO(bool DCOPLUS_on, int D_val, int N_val);
+void configuring_DCO(bool DCOPLUS_on, int D_val);
 
 void DCO_f_range(int DCO_range);
 
