@@ -24,6 +24,13 @@ void select_operating_mode(char mode, int LPM_int){
             - 2: LPM2 
             - 3: LPM3
     */
+
+    //Exit all Low Power Modes before choosing one
+    __bic_SR_register_on_exit(LPM0_bits);
+    __bic_SR_register_on_exit(LPM1_bits);
+    __bic_SR_register_on_exit(LPM2_bits);
+    __bic_SR_register_on_exit(LPM3_bits);
+    __bic_SR_register_on_exit(LPM4_bits);
     switch (mode) {
         case 'A':
             break;
@@ -31,12 +38,19 @@ void select_operating_mode(char mode, int LPM_int){
         case 'L':
             switch (LPM_int) {
                 case 0:
+                    __bis_SR_register(LPM0_bits)         /* Enter Low Power Mode 0 */
                     break;
                 case 1:
+                    __bis_SR_register(LPM1_bits)         /* Enter Low Power Mode 1 */
                     break;
                 case 2:
+                    __bis_SR_register(LPM2_bits)         /* Enter Low Power Mode 2 */
                     break;
                 case 3:
+                    __bis_SR_register(LPM3_bits)         /* Enter Low Power Mode 3 */
+                    break;
+                case 4:
+                    __bis_SR_register(LPM4_bits)         /* Enter Low Power Mode 4 */
                     break;
             default:
                 perror("Error: Selected LPM operating mode not available.");
