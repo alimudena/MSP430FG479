@@ -50,6 +50,6 @@ void enter_LPM();
 //*****************************************************************************
 
 
-void enable_interruption(bool enable);
+void enable_interruption_SD16A(bool enable);
 
 int IFG_polling(void);

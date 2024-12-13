@@ -36,7 +36,7 @@ int main(void){
     
 
     bool const interruption = false;
-    enable_interruption(interruption);
+    enable_interruption_SD16A(interruption);
 
     //SUT
     static const unsigned int OSR = 1;

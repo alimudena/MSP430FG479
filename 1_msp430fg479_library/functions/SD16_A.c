@@ -316,7 +316,7 @@ void data_format(char polarity, char sign){
 //*****************************************************************************
 /*INTERRUPTION CONFIGURATION*/
 //*****************************************************************************
-void enable_interruption(bool enable){
+void enable_interruption_SD16A(bool enable){
     // Clear bits so to not make a mess
     SD16CCTL0 &= ~(SD16IE); 
 
