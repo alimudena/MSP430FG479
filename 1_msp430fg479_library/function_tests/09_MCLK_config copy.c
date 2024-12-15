@@ -7,7 +7,6 @@
 #include "../functions/FLL.h"
 #include "../functions/system_config.h"
 
-
 int main(void){
     volatile unsigned int i;                  // Use volatile to prevent removal
                                             // by compiler optimization
@@ -31,25 +30,23 @@ int main(void){
     const int ACLK_N_div = 1;
     configure_ACLK_N(ACLK_N_div);
 
-//SMCLK can be seen in PIN-54
+//MCLK can be seen in PIN-57
 //*****************************************************************************
-/*CONFIGURATION FOR SMCLK*/
-//*****************************************************************************    
+/*CONFIGURATION FOR MCLK*/
+//*****************************************************************************
     /*
-    CLK references
+    CLK references for MCLK
         - D: DCO
         - X: XT2
-        - N: OFF
-    */
+        - A: LFXT1 (ACLK)
+    */    
+    const char clk_ref_MCLK = 'A';
+    select_reference_MCLK(clk_ref_MCLK);
 
-char clk_ref_SMCLK = 'D';
-select_reference_SMCLK(clk_ref_SMCLK);
+    
+    
 
-char clk_ref_SMCLK = 'X';
-select_reference_SMCLK(clk_ref_SMCLK);
 
-char clk_ref_SMCLK = 'N';
-select_reference_SMCLK(clk_ref_SMCLK);
 
 }
 

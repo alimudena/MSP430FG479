@@ -117,7 +117,8 @@ void configure_N_for_MCLK (int N_MCLK) {
             SCFQCTL |= SCFQ_4M;
             break;
         default:
-            perror("Error: the chosen N for MCLK is not available.");
+            SCFQCTL = N_MCLK;
+            //perror("Error: the chosen N for MCLK is not available.");
             break;  
     }
 
@@ -188,10 +189,10 @@ void LFXT1_internal_cap_config(int LFXT1_int_cap){
     }
 }    
 
-void LFXT1_working_mode(char Low_High_power_mode){
+void LFXT1_working_mode(char Low_High_frequency_mode){
     //Clear bits
     FLL_CTL0 &= ~(XTS_FLL);
-    switch (Low_High_power_mode) {
+    switch (Low_High_frequency_mode) {
         case 'L':
             break;
         case 'H':

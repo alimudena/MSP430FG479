@@ -7,7 +7,6 @@
 #include "../functions/FLL.h"
 #include "../functions/system_config.h"
 
-
 int main(void){
     volatile unsigned int i;                  // Use volatile to prevent removal
                                             // by compiler optimization
@@ -31,25 +30,43 @@ int main(void){
     const int ACLK_N_div = 1;
     configure_ACLK_N(ACLK_N_div);
 
-//SMCLK can be seen in PIN-54
 //*****************************************************************************
-/*CONFIGURATION FOR SMCLK*/
-//*****************************************************************************    
+/*CONFIGURATION FOR LXT1*/
+//*****************************************************************************
+const bool osc_ext = false;
+const int f_osc_ext = 0;
+protection_cpu_required(osc_ext, f_osc_ext);
+
+const char Low_High_frequency_mode = 'H';
+LFXT1_working_mode(Low_High_frequency_mode);
+
+
+/*0  --> XIN Cap = XOUT Cap = 0pf */
+/*10 --> XIN Cap = XOUT Cap = 10pf */
+/*14 --> XIN Cap = XOUT Cap = 14pf */
+/*18 --> XIN Cap = XOUT Cap = 18pf */
+const int LFXT1_int_cap = 18;
+LFXT1_internal_cap_config(LFXT1_int_cap);
+
+
+
+    //MCLK can be seen in PIN-57
+    //*****************************************************************************
+    /*CONFIGURATION FOR MCLK*/
+    //*****************************************************************************
     /*
-    CLK references
+    CLK references for MCLK
         - D: DCO
         - X: XT2
-        - N: OFF
-    */
+        - A: LFXT1 (ACLK)
+    */    
+    const char clk_ref_MCLK = 'A';
+    select_reference_MCLK(clk_ref_MCLK);
 
-char clk_ref_SMCLK = 'D';
-select_reference_SMCLK(clk_ref_SMCLK);
+    
+    
 
-char clk_ref_SMCLK = 'X';
-select_reference_SMCLK(clk_ref_SMCLK);
 
-char clk_ref_SMCLK = 'N';
-select_reference_SMCLK(clk_ref_SMCLK);
 
 }
 

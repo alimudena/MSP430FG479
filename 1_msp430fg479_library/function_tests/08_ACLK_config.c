@@ -13,8 +13,7 @@ int main(void){
                                             // by compiler optimization
     // stop watch dog
     stop_wd();
-    configure_PINS_for_clk_debug();
-
+    
     static const bool interruptions_enabled = true;
     enable_interruptions(interruptions_enabled);
     
@@ -22,34 +21,17 @@ int main(void){
     static const int LPM_int = 3;
     select_operating_mode(modo_operacion, LPM_int);
 
+    configure_PINS_for_clk_debug();
 
-
-
-    // ACLK can be seen directly in PIN-51 if not touched, its exacly fcristal LFXT1.
-
-    //ACLK/N cannot be seen in any pin
-    const int ACLK_N_div = 1;
-    configure_ACLK_N(ACLK_N_div);
-
-//SMCLK can be seen in PIN-54
 //*****************************************************************************
-/*CONFIGURATION FOR SMCLK*/
-//*****************************************************************************    
-    /*
-    CLK references
-        - D: DCO
-        - X: XT2
-        - N: OFF
-    */
+/*CONFIGURATION FOR ACLK SIGNAL REFERENCE and ACLK/n */ 
+//*****************************************************************************
 
-char clk_ref_SMCLK = 'D';
-select_reference_SMCLK(clk_ref_SMCLK);
+// ACLK can be seen directly in PIN-51 if not touched, its exacly fcristal LFXT1.
 
-char clk_ref_SMCLK = 'X';
-select_reference_SMCLK(clk_ref_SMCLK);
-
-char clk_ref_SMCLK = 'N';
-select_reference_SMCLK(clk_ref_SMCLK);
+//ACLK/N cannot be seen in any pin
+const int ACLK_N_div = 1;
+configure_ACLK_N(ACLK_N_div);
 
 }
 

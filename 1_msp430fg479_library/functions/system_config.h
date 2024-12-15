@@ -9,10 +9,10 @@
 /*OPERATING MODES*/
 //*****************************************************************************
 
-// Operating modes
+// Operating modes selection
 void select_operating_mode(char mode, int LPM_int);
-
-
+// Switch off the LPM
+void exit_LMP();
 
 
 //*****************************************************************************
