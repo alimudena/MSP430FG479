@@ -56,9 +56,9 @@
 //          | |                 | 32kHz
 //          --|RST          XOUT|-
 //            |                 |
-//            |             P1.1|--> MCLK = 8Mhz
+//            |             P1.1|--> MCLK = 8Mhz --> 57
 //            |                 |
-//            |             P1.5|--> ACLK = 32kHz
+//            |             P1.5|--> ACLK = 32kHz --> 51
 //            |                 |
 //
 //  M.Seamen/ P. Thanigai
@@ -68,24 +68,83 @@
 //******************************************************************************
 #include <msp430.h>
 #include "../functions/FLL.h"
+#include "../functions/system_config.h"
+#include "functions/general_functions.h"
 int main(void)
 {
-  WDTCTL = WDTPW + WDTHOLD;                 // Stop watchdog timer
-  const int DCO_range = 4;
-  DCO_f_range(DCO_range);
-  //SCFI0 |= FN_4;                            // x2 DCO freq, 8MHz nominal DCO
-  const int N_MCLK = 121;
-  configure_N_for_MCLK (N_MCLK);
-  //SCFQCTL = 121;                            // (121+1) x 32768 x 2 = 7.99 Mhz
-  
-  
-  FLL_CTL0 |= DCOPLUS + XCAP18PF;           // DCO+ set so freq= xtal x D x N+1
-  
-  
-  configure_PINS_for_clk_debug();
-//  P1DIR = 0x22;                             // P1.1,5 to output direction
-//  P1SEL = 0x22;                             // P1.1,5 to output MCLK & ACLK
-//  P1SEL2 |= 0x02;
-  	
-  while(1);                                 // Loop in place
+    const char operating_mode = 'A';
+    select_operating_mode(operating_mode, 0);
+    stop_wd();
+//    WDTCTL = WDTPW + WDTHOLD;                 // Stop watchdog timer
+
+
+    //SCFI0 |= FN_4;                            // x2 DCO freq, 8MHz nominal DCO
+    /*2 --> fDCOCLK =   1.4-12MHz*/
+    /*3 --> fDCOCLK =   2.2-17Mhz*/
+    /*4 --> fDCOCLK =   3.2-25Mhz*/
+    /*8 --> fDCOCLK =     5-40Mhz*/
+    const int DCO_range = 4;
+    DCO_f_range(DCO_range);
+
+
+
+    //    FLL_CTL0 |= DCOPLUS + XCAP18PF;           // DCO+ set so freq= xtal x D x N+1
+
+    //SCFQCTL = 121;                            // (121+1) x 32768 x 2 = 7.99 Mhz    
+    /*0 --> Disable*/
+    /*2 --> fMCLK=2*fACLK          1+1 to 127+1 is possible */
+    /*4 --> fMCLK=4*fACLK */
+    /*8 --> fMCLK=8*fACLK */
+    /*16 --> fMCLK=16*fACLK */
+    /*32 --> fMCLK=32*fACLK */
+    /*64 --> fMCLK=64*fACLK */
+    /*128 --> fMCLK=128*fACLK */
+    /*X --> fMCLK=X*fACLK */
+    const int N_MCLK = 127;
+    configure_N_for_MCLK(N_MCLK);
+
+    /*
+    CLK references MCLK
+        - D: DCO
+        - X: XT2
+        - A: LFXT1
+    */
+    const char ref_MCLK = 'A';
+    select_reference_MCLK(ref_MCLK);
+    
+    const bool DCOPLUS_on = true;
+    const int D_val = 2;
+    configuring_DCO(DCOPLUS_on, D_val);
+
+    const char LFXT1_wk_mode = 'H';
+    LFXT1_working_mode(LFXT1_wk_mode);
+
+    const bool ext_osc = true;
+    const int ext_osc_f = 32;
+    protection_cpu_required(ext_osc, ext_osc_f);
+
+    const int LFXT1_int_cap = 18;
+    LFXT1_internal_cap_config(LFXT1_int_cap);
+
+    /*
+    CLK references SMCLK
+        - D: DCO
+        - X: XT2
+        - N: OFF
+    */
+    const char ref_SMCLK = 'D';
+    select_reference_SMCLK(ref_SMCLK);
+
+
+    //  P1DIR = 0x22;                             // P1.1,5 to output direction
+    //  P1SEL = 0x22;                             // P1.1,5 to output MCLK & ACLK
+    //  P1SEL2 |= 0x02;
+    configure_PINS_for_clk_debug();
+
+    const int divider_ACLK = 2;
+    configure_ACLK_N(divider_ACLK);
+
+    const bool LFXT2_osc_on = false;
+    LFXT2_disable(LFXT2_osc_on);
+    while(1);                                 // Loop in place
 }

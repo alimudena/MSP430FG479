@@ -17,9 +17,6 @@ void configure_PINS_for_clk_debug(){
 }
 
 
-void configure_MCLK_for_debug(){
-    
-}
 
 //*****************************************************************************
 /*CONFIGURATION FOR ACLK/N*/
@@ -88,7 +85,12 @@ void configure_N_for_MCLK (int N_MCLK) {
     /*32 --> fMCLK=32*fACLK */
     /*64 --> fMCLK=64*fACLK */
     /*128 --> fMCLK=128*fACLK */
-    
+    /*X --> fMCLK=X*fACLK */
+        
+    if (N_MCLK>128){
+            perror("Error: the chosen N for MCLK is too high.");
+            return;  
+    }
     // clear bits     
     SCFQCTL &= ~(SCFQ_64K|SCFQ_128K|SCFQ_256K|SCFQ_512K|SCFQ_1M|SCFQ_2M|SCFQ_4M);
     switch(N_MCLK){
@@ -145,6 +147,7 @@ void select_reference_SMCLK(char clk_ref_SMCLK){
             break;
         case 'N':
             FLL_CTL1 |= SMCLKOFF;
+            break;  
         default:
             perror("Error: the chosen reference for SMCLK is not available.");
             break;  
@@ -235,6 +238,7 @@ void LFXT2_disable(bool LFXT2_disabled){
 
 void configuring_DCO(bool DCOPLUS_on, int D_val){
     // First clean the bits
+
     FLL_CTL0 &= ~(DCOPLUS);
     SCFI0 &= ~(FLLD_1 | FLLD_2 | FLLD_4 | FLLD_8);
 
@@ -258,7 +262,6 @@ void configuring_DCO(bool DCOPLUS_on, int D_val){
                 break;
         }
     }
-   
 }
 
 void DCO_f_range(int DCO_range){
