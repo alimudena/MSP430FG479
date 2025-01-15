@@ -25,6 +25,9 @@ INCLUDES
 #include "../functions/SD16_A.h"
 
 unsigned int result;
+#define   Num_of_Results   20
+
+unsigned int results[Num_of_Results];
 int main(void){
 
 //***************************************************************************** 
@@ -67,7 +70,7 @@ const int DCO_range = 4;
 
 // Values for setting the frequency of the DCO+
 // DCO+ set so freq= xtal x D x N+1 
-const int N_MCLK = 127; //Max 127
+const int N_MCLK = 121; //Max 127
 const bool DCOPLUS_on = true; //If D factor is wanted to be applied then -> True
 const int D_val = 8; //Max 8
 
@@ -172,12 +175,18 @@ void __attribute__ ((interrupt(SD16A_VECTOR))) SD16ISR (void)
 #error Compiler not supported!
 #endif
 {
+  static unsigned int index = 0;
   switch (SD16IV)
   {
   case 2:                                   // SD16MEM Overflow
     break;
   case 4:                                   // SD16MEM0 IFG
     result = SD16MEM0;                      // Save CH0 results (clears IFG)
+    results[index] = result;
+    if (++index == Num_of_Results)
+    {
+      index = 0;                            // SET BREAKPOINT HERE
+    }
     break;
   }
 
