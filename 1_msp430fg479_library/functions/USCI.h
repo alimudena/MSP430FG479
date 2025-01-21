@@ -1,15 +1,20 @@
 #include <msp430.h>
 #include <stdbool.h> 
 
-//*****************************************************************************
-/*USCI RELATED FUNCTIONS*/
-//*****************************************************************************
+//How to use UART comms steps
 //The configuration steps for the USCI initialization/re-configuration process is:
-//First set UCSWRST 
-//Initialize USCI registers with UCSWRST = 1
-//Configure ports
-//Clear UCSWRST
+//First set UCSWRST --> USCI_reset()
+
+//Initialize USCI registers with UCSWRST = 1 --> Rest of the functions
+
+//Configure ports --> TODO
+
+//Clear UCSWRST --> USCI_init()
 //Enable interrupts (optional)
+
+//*****************************************************************************
+/*USCI INITIALIZATION AND RESET FUNCTIONS*/
+//*****************************************************************************
 
 void USCI_reset();
 
@@ -19,6 +24,22 @@ void USCI_init();
 /*UART RELATED FUNCTIONS*/
 //*****************************************************************************
 // character format 
+    //parity enable:
+        //True --> parity ON
+        //False --> parity OFF            
+    //if parity enable:
+        //parity_type:
+            //E --> even (par)
+            //O --> odd (impar)
+    //num_data_bit: quantity of data bits available (character length)
+        //7 or 8
+    //num_stop_bit: stop bit select, one at least
+        //1 or 2
+    //first_byte_sent: To choose between MSB or LSB 
+        //M: MSB first
+        //L: LSB first
+
+
 void character_format_sel(bool parity_enable, char parity_type, int num_data_bit, int num_stop_bit, char first_Byte_sent);
 
 // USCI mode

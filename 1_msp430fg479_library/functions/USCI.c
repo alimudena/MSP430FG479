@@ -8,18 +8,18 @@
 
 
 //*****************************************************************************
-/*USCI RELATED FUNCTIONS*/
+/*USCI INITIALIZATION AND RESET FUNCTIONS*/
 //*****************************************************************************
 
 void USCI_reset(){
     //Set the bit UCSWRST in register USCI_A0 Control Register 1 
-    UCB0CTL1 |= UCSWRST;
+    UCA0CTL1 |= UCSWRST;
 
 }
 
 void USCI_init(){
     //Reset the bit UCSWRST in register USCI_A0 Control Register 1 
-    UCB0CTL1 &= ~(UCSWRST);
+    UCA0CTL1 &= ~(UCSWRST);
 
 }
 
@@ -29,6 +29,21 @@ void USCI_init(){
 
 //Character format decision
 void character_format_sel(bool parity_enable, char parity_type, int num_data_bit, int num_stop_bit, char first_Byte_sent){
+    //parity enable:
+        //True --> parity ON
+        //False --> parity OFF            
+    //if parity enable:
+        //parity_type:
+            //E --> even (par)
+            //O --> odd (impar)
+    //num_data_bit: quantity of data bits available (character length)
+        //7 or 8
+    //num_stop_bit: stop bit select, one at least
+        //1 or 2
+    //first_byte_sent: To choose between MSB or LSB 
+        //M: MSB first
+        //L: LSB first
+    
     // first clear all bits
     UCA0CTL0 &= ~(UCPEN|UCPAR|UCMSB|UC7BIT|UCSPB);
     //parity enable
@@ -81,6 +96,10 @@ void character_format_sel(bool parity_enable, char parity_type, int num_data_bit
 }
 
 void USCI_mode_sel(char USCI_mode){
+    //U --> Uart
+    //I --> IDLE-LINE MULTIPROCESSOR MODE
+    //D --> ADDRESS-BIT MULTIPROCESSOR MODE
+    //A --> UART MODE WITH AUTOMATIC BAUD RATE DETECTION
     UCA0CTL0 &= ~(UCMODE0|UCMODE1);
     switch (USCI_mode) {
         case 'U': //UART
@@ -158,7 +177,6 @@ void IrDA_detect_value(int H_L_detect){
     UCA0IRRCTL &= ~(UCIRRXPL);
     if (H_L_detect==0){
         UCA0IRRCTL |= UCIRRXPL;
-        break;
     }
 }
 
