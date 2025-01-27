@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <msp430.h>
 #include <stdbool.h> 
 
@@ -19,6 +20,11 @@
 void USCI_reset();
 
 void USCI_init();
+
+void init_UART_GPIO();
+
+void USCI_clk_ref(char clk_ref);
+
 
 //*****************************************************************************
 /*UART RELATED FUNCTIONS*/
@@ -45,7 +51,12 @@ void character_format_sel(bool parity_enable, char parity_type, int num_data_bit
 // USCI mode
 void USCI_mode_sel(char USCI_mode);
 
-// inicializacion del modo UART -> limpieza del registro UCSYNC 
+void data_to_transmit(uint8_t data);
+
+void UART_baudrate_generation(int ref_frec, int baudrate_wanted);
+
+
+
 
 // IrDA encoding(decoding) enable
 void IrDA_enable(bool IrDA_enabled);

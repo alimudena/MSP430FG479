@@ -23,6 +23,24 @@ void USCI_init(){
 
 }
 
+
+void init_UART_GPIO()
+{
+    P2SEL = BIT4 | BIT5;                      // P2.5 = RXD, P2.4=TXD
+}
+
+
+void USCI_clk_ref(char clk_ref){
+    UCA0CTL1 &= ~(UCSSEL_0|UCSSEL_1|UCSSEL_2|UCSSEL_3);
+    switch (clk_ref) {
+        case 'U':
+            UCA0CTL1|=UCSSEL_0;
+            break;
+         
+    }
+}
+
+
 //*****************************************************************************
 /*UART RELATED FUNCTIONS*/
 //*****************************************************************************
@@ -120,6 +138,14 @@ void USCI_mode_sel(char USCI_mode){
 }
 
 
+void data_to_transmit(uint8_t data){
+    while (!(IFG2&UCA0TXIFG));                // The register for the data only can be written if the flag UCA0TXIFG is up
+    UCA0TXBUF = data;
+}
+
+void UART_baudrate_generation(int ref_frec, int baudrate_wanted){
+    
+}
 
 // IrDA encoding enable
 void IrDA_enable(bool IrDA_enabled){
