@@ -1,0 +1,37 @@
+[
+   {
+      "directory" : "D:/Universidad/STRIKE/MSP430FG479/desarrollo.c/Debug",
+      "command"   : "clang++ -I\"C:/ti/ccs2002/ccs/ccs_base/msp430/include\" -I\"D:/Universidad/STRIKE/MSP430FG479/desarrollo.c\" -I\"C:/ti/ccs2002/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include\" -D__MSP430FG479__",
+      "file"      : "D:/Universidad/STRIKE/MSP430FG479/desarrollo.c/functions/FLL.c"
+   },
+   {
+      "directory" : "D:/Universidad/STRIKE/MSP430FG479/desarrollo.c/Debug",
+      "command"   : "clang++ -I\"C:/ti/ccs2002/ccs/ccs_base/msp430/include\" -I\"D:/Universidad/STRIKE/MSP430FG479/desarrollo.c\" -I\"C:/ti/ccs2002/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include\" -D__MSP430FG479__",
+      "file"      : "D:/Universidad/STRIKE/MSP430FG479/desarrollo.c/functions/SD16_A.c"
+   },
+   {
+      "directory" : "D:/Universidad/STRIKE/MSP430FG479/desarrollo.c/Debug",
+      "command"   : "clang++ -I\"C:/ti/ccs2002/ccs/ccs_base/msp430/include\" -I\"D:/Universidad/STRIKE/MSP430FG479/desarrollo.c\" -I\"C:/ti/ccs2002/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include\" -D__MSP430FG479__",
+      "file"      : "D:/Universidad/STRIKE/MSP430FG479/desarrollo.c/functions/USCI.c"
+   },
+   {
+      "directory" : "D:/Universidad/STRIKE/MSP430FG479/desarrollo.c/Debug",
+      "command"   : "clang++ -I\"C:/ti/ccs2002/ccs/ccs_base/msp430/include\" -I\"D:/Universidad/STRIKE/MSP430FG479/desarrollo.c\" -I\"C:/ti/ccs2002/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include\" -D__MSP430FG479__",
+      "file"      : "D:/Universidad/STRIKE/MSP430FG479/desarrollo.c/functions/general_functions.c"
+   },
+   {
+      "directory" : "D:/Universidad/STRIKE/MSP430FG479/desarrollo.c/Debug",
+      "command"   : "clang++ -I\"C:/ti/ccs2002/ccs/ccs_base/msp430/include\" -I\"D:/Universidad/STRIKE/MSP430FG479/desarrollo.c\" -I\"C:/ti/ccs2002/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include\" -D__MSP430FG479__",
+      "file"      : "D:/Universidad/STRIKE/MSP430FG479/desarrollo.c/functions/system_config.c"
+   },
+   {
+      "directory" : "D:/Universidad/STRIKE/MSP430FG479/desarrollo.c/Debug",
+      "command"   : "clang++ -I\"C:/ti/ccs2002/ccs/ccs_base/msp430/include\" -I\"D:/Universidad/STRIKE/MSP430FG479/desarrollo.c\" -I\"C:/ti/ccs2002/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include\" -D__MSP430FG479__",
+      "file"      : "D:/Universidad/STRIKE/MSP430FG479/desarrollo.c/functions/toggle_pin.c"
+   },
+   {
+      "directory" : "D:/Universidad/STRIKE/MSP430FG479/desarrollo.c/Debug",
+      "command"   : "clang++ -I\"C:/ti/ccs2002/ccs/ccs_base/msp430/include\" -I\"D:/Universidad/STRIKE/MSP430FG479/desarrollo.c\" -I\"C:/ti/ccs2002/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include\" -D__MSP430FG479__",
+      "file"      : "D:/Universidad/STRIKE/MSP430FG479/desarrollo.c/function_tests/20_UART_baudrate_selection.c"
+   }
+]

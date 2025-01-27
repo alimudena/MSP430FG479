@@ -10,8 +10,14 @@ GEN_OPTS__FLAG :=
 GEN_CMDS__FLAG := 
 
 ORDERED_OBJS += \
+"./function_tests/20_UART_baudrate_selection.obj" \
+"./functions/FLL.obj" \
+"./functions/SD16_A.obj" \
+"./functions/USCI.obj" \
 "./functions/general_functions.obj" \
-"./functions/testing_functions.c/toggle_led_MSP-TS430PN80.obj" \
+"./functions/system_config.obj" \
+"./functions/toggle_pin.obj" \
+"../lnk_msp430fg479.cmd" \
 $(GEN_CMDS__FLAG) \
 -llibc.a \
 
@@ -22,10 +28,12 @@ RMDIR := RMDIR /S/Q
 
 # All of the sources participating in the build are defined here
 -include sources.mk
+-include subdir_vars.mk
+-include function_tests/subdir_vars.mk
 -include functions/subdir_vars.mk
--include functions/testing_functions.c/subdir_vars.mk
+-include subdir_rules.mk
+-include function_tests/subdir_rules.mk
 -include functions/subdir_rules.mk
--include functions/testing_functions.c/subdir_rules.mk
 -include objects.mk
 
 ifneq ($(MAKECMDGOALS),clean)
@@ -122,29 +130,29 @@ endif
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXE_OUTPUTS += \
-MSP430FG479.out 
+desarrollo.c.out 
 
 EXE_OUTPUTS__QUOTED += \
-"MSP430FG479.out" 
+"desarrollo.c.out" 
 
 
 # All Target
-all: $(OBJS) $(GEN_CMDS)
-	@$(MAKE) --no-print-directory -Onone "MSP430FG479.out"
+all: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
+	@$(MAKE) --no-print-directory -Onone "desarrollo.c.out"
 
 # Tool invocations
-MSP430FG479.out: $(OBJS) $(GEN_CMDS)
+desarrollo.c.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: MSP430 Linker'
-	"C:/ti/ccs2002/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/bin/cl430" -vmsp --use_hw_mpy=none --advice:power=all --define=__MSP430FG479__ -g --printf_support=minimal --diag_warning=225 --diag_wrap=off --display_error_number --silicon_errata=CPU19 -z -m"MSP430FG479.map" --heap_size=80 --stack_size=80 -i"C:/ti/ccs2002/ccs/ccs_base/msp430/include" -i"C:/ti/ccs2002/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/lib" -i"C:/ti/ccs2002/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include" --reread_libs --diag_wrap=off --display_error_number --warn_sections --xml_link_info="MSP430FG479_linkInfo.xml" --use_hw_mpy=none --rom_model -o "MSP430FG479.out" $(ORDERED_OBJS)
+	"C:/ti/ccs2002/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/bin/cl430" -vmsp --use_hw_mpy=none --advice:power=all --define=__MSP430FG479__ -g --printf_support=minimal --diag_warning=225 --diag_wrap=off --display_error_number --silicon_errata=CPU19 -z -m"desarrollo.c.map" --heap_size=80 --stack_size=80 -i"C:/ti/ccs2002/ccs/ccs_base/msp430/include" -i"C:/ti/ccs2002/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/lib" -i"C:/ti/ccs2002/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include" --reread_libs --diag_wrap=off --display_error_number --warn_sections --xml_link_info="desarrollo.c_linkInfo.xml" --use_hw_mpy=none --rom_model -o "desarrollo.c.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 
 # Other Targets
 clean:
 	-$(RM) $(EXE_OUTPUTS__QUOTED)
-	-$(RM) "functions\general_functions.obj" "functions\testing_functions.c\toggle_led_MSP-TS430PN80.obj" 
-	-$(RM) "functions\general_functions.d" "functions\testing_functions.c\toggle_led_MSP-TS430PN80.d" 
+	-$(RM) "function_tests\20_UART_baudrate_selection.obj" "functions\FLL.obj" "functions\SD16_A.obj" "functions\USCI.obj" "functions\general_functions.obj" "functions\system_config.obj" "functions\toggle_pin.obj" 
+	-$(RM) "function_tests\20_UART_baudrate_selection.d" "functions\FLL.d" "functions\SD16_A.d" "functions\USCI.d" "functions\general_functions.d" "functions\system_config.d" "functions\toggle_pin.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 

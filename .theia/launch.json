@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "desarrollo.c",
+            "type": "ccs-debug",
+            "request": "launch",
+            "projectInfo": {
+                "name": "desarrollo.c",
+                "resourceId": "/desarrollo.c"
+            }
+        }
+    ]
+}

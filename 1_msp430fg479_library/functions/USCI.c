@@ -33,10 +33,18 @@ void init_UART_GPIO()
 void USCI_clk_ref(char clk_ref){
     UCA0CTL1 &= ~(UCSSEL_0|UCSSEL_1|UCSSEL_2|UCSSEL_3);
     switch (clk_ref) {
-        case 'U':
+        case 'U': //UCLK
             UCA0CTL1|=UCSSEL_0;
             break;
-         
+        case 'A': //ACLK
+            UCA0CTL1|=UCSSEL_1;
+            break;
+        case 'S': //SMCLK
+            UCA0CTL1|=UCSSEL_2;
+            break;
+        default:
+            perror("Error: Not available clk reference in USART.");
+            break;
     }
 }
 
