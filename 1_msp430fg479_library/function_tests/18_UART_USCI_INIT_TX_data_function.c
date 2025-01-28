@@ -152,7 +152,7 @@ void main()
     init_UART_GPIO();
     initUART();
 
-    bool parity_enable = true;
+    bool parity_enable = false;
     char parity_type = 'O';
     int num_data_bit = 7;
     int num_stop_bit = 2;

@@ -53,8 +53,8 @@ void USCI_mode_sel(char USCI_mode);
 
 void data_to_transmit(uint8_t data);
 
-void UART_baudrate_generation(int ref_frec, int baudrate_wanted);
-
+//void UART_baudrate_generation(int ref_frec, int baudrate_wanted);
+void UART_baudrate_generation(int32_t BRCLK_freq, int32_t baudrate);
 
 
 

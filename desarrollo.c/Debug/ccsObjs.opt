@@ -1,4 +1,4 @@
-"./function_tests/20_UART_baudrate_selection.obj"
+"./function_tests/main.obj"
 "./functions/FLL.obj"
 "./functions/SD16_A.obj"
 "./functions/USCI.obj"

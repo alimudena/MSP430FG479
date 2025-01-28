@@ -150,17 +150,358 @@ void data_to_transmit(uint8_t data){
     while (!(IFG2&UCA0TXIFG));                // The register for the data only can be written if the flag UCA0TXIFG is up
     UCA0TXBUF = data;
 }
+/*
+void UART_baudrate_generation(float ref_frec, float baudrate_wanted){
+    UCA0MCTL  &= ~(UCOS16);
+    float N = ref_frec/baudrate_wanted;
+    char BR = 'L'; //baudrate indicator, if N >= 16 -- > High, else --> low --> for the selection of the configuration
 
-void UART_baudrate_generation(int ref_frec, int baudrate_wanted){
-    
+    if (N>=16){
+        UCA0MCTL |= UCOS16;
+        BR = 'H';
+    }
+
+    switch (BR) {
+        case 'L':
+            int UCBRX = int(N);
+
+            //UCBRX = UCA0BR0 + UCA0BR1*256;
+            int prod = int(UCBRX/256);
+            UCA0BR1 = prod;
+            UCA0BR0 = UCBRX-prod*256;
+
+
+
+
+            break;
+
+        default:
+            perror("Error:Something went wrong in selecting baudrate.");
+            break; 
+    }
+
 }
+*/
+
+void UART_baudrate_generation(int32_t BRCLK_freq, int32_t baudrate){
+    switch ((int)BRCLK_freq) {
+        case (int)32768:
+            switch ((int)baudrate) {
+                case (int)1200:
+                    UCA0BR0 = 27;                              
+                    UCA0BR1 = 0;                              
+                    UCA0MCTL = UCBRS_2;                       
+                    break;
+
+                case (int)2400:
+                    UCA0BR0 = 13;                              
+                    UCA0BR1 = 0;                              
+                    UCA0MCTL = UCBRS_6;                       
+                    break;
+
+                case (int)4800:
+                    UCA0BR0 = 6;                              
+                    UCA0BR1 = 0;                              
+                    UCA0MCTL = UCBRS_7;                       
+                    break;
+
+                case (int)9600:
+                    UCA0BR0 = 3;                              
+                    UCA0BR1 = 0;                              
+                    UCA0MCTL = UCBRS_3;                       
+                    break;
+
+                default:
+                    perror("Error: Something went wrong in selecting baudrate.");
+                    break; 
+
+            }
+        break;
+        
+        case (int)1000000:
+            switch ((int)baudrate) {
+                case (int)9600:
+                    UCA0BR0 = 104;                              
+                    UCA0BR1 = 0;                              
+                    UCA0MCTL = UCBRS_1;                       
+                    break;
+
+                case (int)19200:
+                    UCA0BR0 = 52;                              
+                    UCA0BR1 = 0;                              
+                    UCA0MCTL = UCBRS_0;                       
+                    break;
+
+                case (int)38400:
+                    UCA0BR0 = 26;                              
+                    UCA0BR1 = 0;                              
+                    UCA0MCTL = UCBRS_0;                       
+                    break;
+
+                case (int)57600:
+                    UCA0BR0 = 17;                              
+                    UCA0BR1 = 0;                              
+                    UCA0MCTL = UCBRS_3;                       
+                    break;
+
+                case (int)115200:
+                    UCA0BR0 = 8;                              
+                    UCA0BR1 = 0;                              
+                    UCA0MCTL = UCBRS_6;                       
+                    break;
+
+                
+                default:
+                    perror("Error: Something went wrong in selecting baudrate.");
+                    break; 
+            }
+        break;
+
+        case (int)1048576:
+            switch ((int)baudrate) {
+                case (int)9600:
+                    UCA0BR0 = 109;                              
+                    UCA0BR1 = 0;                              
+                    UCA0MCTL = UCBRS_2;                       
+                    break;
+
+                case (int)19200:
+                    UCA0BR0 = 54;                              
+                    UCA0BR1 = 0;                              
+                    UCA0MCTL = UCBRS_5;                       
+                    break;
+
+                case (int)38400:
+                    UCA0BR0 = 27;                              
+                    UCA0BR1 = 0;                              
+                    UCA0MCTL = UCBRS_2;                       
+                    break;
+
+                case (int)57600:
+                    UCA0BR0 = 18;                              
+                    UCA0BR1 = 0;                              
+                    UCA0MCTL = UCBRS_1;                       
+                    break;
+
+                case (int)115200:
+                    UCA0BR0 = 9;                              
+                    UCA0BR1 = 0;                              
+                    UCA0MCTL = UCBRS_1;                       
+                    break;
+
+                
+                default:
+                    perror("Error: Something went wrong in selecting baudrate.");
+                    break; 
+            }
+        break;
+
+        case (int)4000000:
+            switch ((int)baudrate) {
+                case (int)9600:
+                    UCA0BR0 = 160;                              
+                    UCA0BR1 = 1;                              
+                    UCA0MCTL = UCBRS_6;                       
+                    break;
+
+                case (int)19200:
+                    UCA0BR0 = 208;                              
+                    UCA0BR1 = 0;                              
+                    UCA0MCTL = UCBRS_3;                       
+                    break;
+
+                case (int)38400:
+                    UCA0BR0 = 104;                              
+                    UCA0BR1 = 0;                              
+                    UCA0MCTL = UCBRS_1;                       
+                    break;
+
+                case (int)57600:
+                    UCA0BR0 = 69;                              
+                    UCA0BR1 = 0;                              
+                    UCA0MCTL = UCBRS_4;                       
+                    break;
+
+                case (int)115200:
+                    UCA0BR0 = 34;                              
+                    UCA0BR1 = 0;                              
+                    UCA0MCTL = UCBRS_6;                       
+                    break;
+
+                case (int)230400:
+                    UCA0BR0 = 17;                              
+                    UCA0BR1 = 0;                              
+                    UCA0MCTL = UCBRS_3;                       
+                    break;
+                
+                default:
+                    perror("Error: Something went wrong in selecting baudrate.");
+                    break; 
+            }
+        break;
+
+        case (int)8000000:
+                    switch ((int)baudrate) {
+                        case (int)9600:
+                            UCA0BR0 = 65;                              
+                            UCA0BR1 = 3;                              
+                            UCA0MCTL = UCBRS_2;                       
+                            break;
+
+                        case (int)19200:
+                            UCA0BR0 = 163;                              
+                            UCA0BR1 = 1;                             
+                            UCA0MCTL = UCBRS_6;                       
+                            break;
+
+                        case (int)38400:
+                            UCA0BR0 = 208;                              
+                            UCA0BR1 = 0;                              
+                            UCA0MCTL = UCBRS_3;                       
+                            break;
+
+                        case (int)57600:
+                            UCA0BR0 = 138;                              
+                            UCA0BR1 = 0;                              
+                            UCA0MCTL = UCBRS_7;                       
+                            break;
+
+                        case (int)115200:
+                            UCA0BR0 = 69;                              
+                            UCA0BR1 = 0;                              
+                            UCA0MCTL = UCBRS_4;                       
+                            break;
+
+                        case (int)230400:
+                            UCA0BR0 = 34;                              
+                            UCA0BR1 = 0;                              
+                            UCA0MCTL = UCBRS_6;                       
+                            break;
+                        
+                        case (int)460800:
+                            UCA0BR0 = 17;                              
+                            UCA0BR1 = 0;                              
+                            UCA0MCTL = UCBRS_3;                       
+                            break;
+
+                        default:
+                            perror("Error: Something went wrong in selecting baudrate.");
+                            break; 
+                    }
+        break;
+        case (int)12000000:
+                    switch ((int)baudrate) {
+                        case (int)9600:
+                            UCA0BR0 = 226;                              
+                            UCA0BR1 = 4;                              
+                            UCA0MCTL = UCBRS_0;                       
+                            break;
+
+                        case (int)19200:
+                            UCA0BR0 = 113;                              
+                            UCA0BR1 = 2;                             
+                            UCA0MCTL = UCBRS_0;                       
+                            break;
+
+                        case (int)38400:
+                            UCA0BR0 = 56;                              
+                            UCA0BR1 = 1;                              
+                            UCA0MCTL = UCBRS_4;                       
+                            break;
+
+                        case (int)57600:
+                            UCA0BR0 = 208;                              
+                            UCA0BR1 = 0;                              
+                            UCA0MCTL = UCBRS_2;                       
+                            break;
+
+                        case (int)115200:
+                            UCA0BR0 = 104;                              
+                            UCA0BR1 = 0;                              
+                            UCA0MCTL = UCBRS_1;                       
+                            break;
+
+                        case (int)230400:
+                            UCA0BR0 = 52;                              
+                            UCA0BR1 = 0;                              
+                            UCA0MCTL = UCBRS_0;                       
+                            break;
+                        
+                        case (int)460800:
+                            UCA0BR0 = 26;                              
+                            UCA0BR1 = 0;                              
+                            UCA0MCTL = UCBRS_0;                       
+                            break;
+
+                        default:
+                            perror("Error: Something went wrong in selecting baudrate.");
+                            break; 
+                    }
+        break;
+
+
+        case (int)16000000:
+                    switch ((int)baudrate) {
+                        case (int)9600:
+                            UCA0BR0 = 130;                              
+                            UCA0BR1 = 6;                              
+                            UCA0MCTL = UCBRS_6;                       
+                            break;
+
+                        case (int)19200:
+                            UCA0BR0 = 65;                              
+                            UCA0BR1 = 3;                             
+                            UCA0MCTL = UCBRS_2;                       
+                            break;
+
+                        case (int)38400:
+                            UCA0BR0 = 160;                              
+                            UCA0BR1 = 1;                              
+                            UCA0MCTL = UCBRS_6;                       
+                            break;
+
+                        case (int)57600:
+                            UCA0BR0 = 21;                              
+                            UCA0BR1 = 1;                              
+                            UCA0MCTL = UCBRS_7;                       
+                            break;
+
+                        case (int)115200:
+                            UCA0BR0 = 138;                              
+                            UCA0BR1 = 0;                              
+                            UCA0MCTL = UCBRS_7;                       
+                            break;
+
+                        case (int)230400:
+                            UCA0BR0 = 69;                              
+                            UCA0BR1 = 0;                              
+                            UCA0MCTL = UCBRS_4;                       
+                            break;
+                        
+                        case (int)460800:
+                            UCA0BR0 = 34;                              
+                            UCA0BR1 = 0;                              
+                            UCA0MCTL = UCBRS_6;                       
+                            break;
+
+                        default:
+                            perror("Error: Something went wrong in selecting baudrate.");
+                            break; 
+                    }
+                break;
+
+    }
+
+}
+
 
 // IrDA encoding enable
 void IrDA_enable(bool IrDA_enabled){
-    UCA0IRTCTL &= ~(UCIREN);    
+    UCA0IRTCTL &= ~(UCIREN);
     if (IrDA_enabled){
         UCA0IRTCTL |= UCIREN;
     }
+
 }
 
 void IrDA_pulse_config(char IrDA_clk_ref, int IrDA_Transmit_Pulse_Length){

@@ -10,7 +10,7 @@ GEN_OPTS__FLAG :=
 GEN_CMDS__FLAG := 
 
 ORDERED_OBJS += \
-"./function_tests/20_UART_baudrate_selection.obj" \
+"./function_tests/main.obj" \
 "./functions/FLL.obj" \
 "./functions/SD16_A.obj" \
 "./functions/USCI.obj" \
@@ -151,8 +151,8 @@ desarrollo.c.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 # Other Targets
 clean:
 	-$(RM) $(EXE_OUTPUTS__QUOTED)
-	-$(RM) "function_tests\20_UART_baudrate_selection.obj" "functions\FLL.obj" "functions\SD16_A.obj" "functions\USCI.obj" "functions\general_functions.obj" "functions\system_config.obj" "functions\toggle_pin.obj" 
-	-$(RM) "function_tests\20_UART_baudrate_selection.d" "functions\FLL.d" "functions\SD16_A.d" "functions\USCI.d" "functions\general_functions.d" "functions\system_config.d" "functions\toggle_pin.d" 
+	-$(RM) "function_tests\main.obj" "functions\FLL.obj" "functions\SD16_A.obj" "functions\USCI.obj" "functions\general_functions.obj" "functions\system_config.obj" "functions\toggle_pin.obj" 
+	-$(RM) "function_tests\main.d" "functions\FLL.d" "functions\SD16_A.d" "functions\USCI.d" "functions\general_functions.d" "functions\system_config.d" "functions\toggle_pin.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 
