@@ -2,6 +2,7 @@
 #include <stdbool.h> 
 
 
+
 //*****************************************************************************
 /*CONFIGURATION FOR DEBUGGING/N*/
 //*****************************************************************************
@@ -53,4 +54,10 @@ void LFXT2_disable(bool LFXT2_disabled);
 void configuring_DCO(bool DCOPLUS_on, int D_val);
 
 void DCO_f_range(int DCO_range);
+
+//*****************************************************************************
+/*BASIC CONFIGURATIONS PRESETS*/
+//*****************************************************************************
+
+void initClockTo8MHz();
 

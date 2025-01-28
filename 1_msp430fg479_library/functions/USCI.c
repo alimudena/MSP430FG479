@@ -20,6 +20,9 @@ void USCI_reset(){
 void USCI_init(){
     //Reset the bit UCSWRST in register USCI_A0 Control Register 1 
     UCA0CTL1 &= ~(UCSWRST);
+    IFG2 &= ~(UCA0RXIFG); //initialization of USCI
+    IE2 |= UCA0RXIE;                          // Enable USCI_A0 RX interrupt
+
 
 }
 
@@ -31,6 +34,11 @@ void init_UART_GPIO()
 
 
 void USCI_clk_ref(char clk_ref){
+    /*clk_ref:
+        U --> UCLK
+        A --> ACLK
+        S --> SMCLK        
+    */
     UCA0CTL1 &= ~(UCSSEL_0|UCSSEL_1|UCSSEL_2|UCSSEL_3);
     switch (clk_ref) {
         case 'U': //UCLK
