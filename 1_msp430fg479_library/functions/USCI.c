@@ -57,6 +57,14 @@ void USCI_clk_ref(char clk_ref){
 }
 
 
+void USCI_interrupt_enable(bool enable_USCI_interr){
+    IE2 &= ~(UCA0RXIE|UCA0TXIE);
+    if (enable_USCI_interr){
+        IE2 |= UCA0RXIE+UCA0TXIE;                 // Enable USCI_A0 TX/RX interrupt
+    }
+}
+
+
 //*****************************************************************************
 /*UART RELATED FUNCTIONS*/
 //*****************************************************************************

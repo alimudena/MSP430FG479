@@ -25,6 +25,8 @@ void init_UART_GPIO();
 
 void USCI_clk_ref(char clk_ref);
 
+void USCI_interrupt_enable(bool enable_USCI_interr);
+
 
 //*****************************************************************************
 /*UART RELATED FUNCTIONS*/

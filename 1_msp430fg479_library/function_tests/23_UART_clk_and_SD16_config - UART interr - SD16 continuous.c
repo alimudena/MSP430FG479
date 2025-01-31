@@ -34,6 +34,8 @@ uint16_t tx_val = 0;
 uint8_t high_word = 0;
 uint8_t low_word = 0;
 uint16_t my_register = 0;
+bool high_or_low = true;
+bool state = 0;
 
 //******************************************************************************
 // UART Initialization *********************************************************
@@ -70,6 +72,9 @@ void main()
     stop_wd();
     const char operating_mode = 'A';
     select_operating_mode(operating_mode, 0);
+
+    enable_interruptions(true);
+
     //CLK configuration
     initClockTo8MHz();
     if (CONFIG_SD16 == false){
@@ -102,7 +107,7 @@ void main()
     static const bool parity_enable = false;
     static const char parity_type = 'O';
     static const int num_data_bit = 8;
-    static const int num_stop_bit = 2;
+    static const int num_stop_bit = 1;
     static const char first_Byte_sent = 'L';
     character_format_sel(parity_enable, parity_type, num_data_bit, num_stop_bit, first_Byte_sent);
 
@@ -113,6 +118,7 @@ void main()
     static const char USCI_mode = 'U';
 
     USCI_mode_sel(USCI_mode);
+
 
 
     if (CONFIG_SD16){
@@ -139,7 +145,7 @@ void main()
     static const unsigned int clk_div_1 = 1;
     static const unsigned int clk_div_2 = 1;
         // -- Método de lectura: Polling o Interrupciones
-    bool const interruption_SD16A = false;
+    bool const interruption_SD16A = true;
         // -- Over Sampling Ratio
     static const unsigned int OSR = 512; //1, 32, 64, 128, 256, 512, 1024
         // -- Ganancia
@@ -168,9 +174,12 @@ void main()
     data_format(polarity, sign);
 
     }
+    
 
     start_conversion(); // While it is started, working in continuous mode will sample the channel A until it is stopped
     
+    
+    /*
     while (1) {
     
 
@@ -183,9 +192,93 @@ void main()
  //   tx_val = SD16MEM0;                     
     
     //data_to_transmit(tx_val);
-    data_to_transmit(high_word);
-    data_to_transmit(low_word);
+    //data_to_transmit(high_word);
+    //data_to_transmit(low_word);
     
     }
+    */
 
 }
+
+
+
+//***************************************************************************** 
+//Interrupción de la UART
+//***************************************************************************** 
+
+//TX interrupt handler
+
+#if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
+#pragma vector=USCIAB0TX_VECTOR
+__interrupt void USCI_A0_Tx (void)
+#elif defined(__GNUC__)
+void __attribute__ ((interrupt(USCIAB0TX_VECTOR))) USCI_A0_Tx (void)
+#else
+#error Compiler not supported!
+#endif
+/*
+{
+    //las siguientes lineas equivalen a utilizar la funcion data_to_transmit 
+  if (state == 1){
+  while(!(IFG2&UCA0TXIFG));
+    if (high_or_low){
+        UCA0TXBUF = high_word;                    // TX -> RXed character
+    }else{
+        UCA0TXBUF = low_word;                    // TX -> RXed character
+        state = 0;
+    }
+    high_or_low = !high_or_low;
+  }
+}
+*/
+{
+    if (state == 1) {
+        if (high_or_low) {
+            UCA0TXBUF = high_word; // Envía el byte alto
+        } else {
+            UCA0TXBUF = low_word;  // Envía el byte bajo
+            state = 0;  // Solo aquí finalizamos la transmisión completa
+            IE2 &= ~(UCA0RXIE|UCA0TXIE); // Disabling UART interrupt until SD16 enables it again
+
+
+        }
+        high_or_low = !high_or_low;  // Alterna entre alto y bajo
+    }
+}
+
+
+
+//***************************************************************************** 
+//Interrupción del SD16_A
+//***************************************************************************** 
+
+
+#if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
+#pragma vector=SD16A_VECTOR
+__interrupt void SD16ISR(void)
+#elif defined(__GNUC__)
+void __attribute__ ((interrupt(SD16A_VECTOR))) SD16ISR (void)
+#else
+#error Compiler not supported!
+#endif
+{
+  switch (SD16IV)
+  {
+  case 2:                                   // SD16MEM Overflow
+    break;
+  case 4:                                   // SD16MEM0 IFG
+    //USCI_interrupt_enable(true);
+    IE2 |= UCA0RXIE+UCA0TXIE;                 // Enabling UART interrupt
+
+    if (state == 0){
+        my_register = SD16MEM0;              // Save CH0 results (clears IFG)
+
+        high_word = (my_register >> 8) & 0xFFFF; // 8 bits superiores (0x1234)
+        low_word = my_register & 0xFFFF;          // 8 bits inferiores (0x5678)
+        state = 1;
+    }
+
+    break;
+  }
+}
+
