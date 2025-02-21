@@ -18,7 +18,7 @@
 //*****************************************************************************
 
 void USCI_reset();
-
+void USCI_setup();
 void USCI_init();
 
 void init_UART_GPIO();
@@ -75,4 +75,6 @@ void IrDA_decoding_filter(bool IrDA_dec_filter_enabled, int IrDA_Receive_Filter_
 //*****************************************************************************
 
 void SPI_char_format(int SPI_length, char first_Byte_sent);
+
+void USCI_SPI_pin_setup();
 

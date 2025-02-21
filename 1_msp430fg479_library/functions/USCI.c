@@ -20,10 +20,6 @@ void USCI_setup(){
 void USCI_init(){
     //Reset the bit UCSWRST in register USCI_A0 Control Register 1 
     UCA0CTL1 &= ~(UCSWRST);
-    IFG2 &= ~(UCA0RXIFG); //initialization of USCI
-    IE2 |= UCA0RXIE;                          // Enable USCI_A0 RX interrupt
-
-
 }
 
 
@@ -614,6 +610,11 @@ void IrDA_decoding_filter(bool IrDA_dec_filter_enabled, int IrDA_Receive_Filter_
 //*****************************************************************************
 /*SPI RELATED FUNCTIONS*/
 //*****************************************************************************
+
+void USCI_SPI_pin_setup(){
+    P2SEL |= 0x30;                            // P2.4,2.5 option select
+    P3SEL |= 0x01;                            // P3.0 option select
+  }
 
 void SPI_mode_config(char Master_Slave){
     /*

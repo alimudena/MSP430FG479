@@ -105,13 +105,20 @@ int main(void)
                                             // DCO to stabilize.
   //while(!(P3IN&0x01));                      // If clock sig from mstr stays low,
                                             // it is not yet in SPI mode
-  P2SEL |= 0x30;                            // P2.4,2.5 option select
-  P3SEL |= 0x01;                            // P3.0 option select
-
   
-  UCA0CTL1 = UCSWRST;                       // **Put state machine in reset**
-  UCA0CTL0 |= UCSYNC+UCCKPL+UCMSB;          //3-pin, 8-bit SPI master
-  UCA0CTL1 &= ~UCSWRST;                     // **Initialize USCI state machine**
+  USCI_SPI_pin_setup();
+  
+  USCI_setup();                             // **Put state machine in reset**
+  
+  
+  UCA0CTL0 |= UCSYNC+UCCKPL;          //3-pin, 8-bit SPI master
+
+
+  static const int SPI_length = 8;
+  static const char first_Byte_sent = 'L';
+  SPI_char_format(SPI_length, first_Byte_sent); //8-bit and MSB SPI 
+
+  USCI_init();                     // **Initialize USCI state machine**
                 
   
   static const bool enable_USCI_interr_rx = true; 
@@ -134,9 +141,6 @@ void __attribute__ ((interrupt(USCIAB0RX_VECTOR))) USCIA0RX_ISR (void)
 {
   while (!(IFG2 & UCA0TXIFG));              // USCI_A0 TX buffer ready?
   //for(i=20;i>0;i--);                      // Now with stable ACLK, wait for
-  bit_counter++;
-  if (bit_counter == 7){
-    UCA0TXBUF = UCA0RXBUF;
-    bit_counter = 0;
-  }
+  UCA0TXBUF = UCA0RXBUF;
+
 }
