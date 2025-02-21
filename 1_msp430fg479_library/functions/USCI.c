@@ -11,7 +11,7 @@
 /*USCI INITIALIZATION AND RESET FUNCTIONS*/
 //*****************************************************************************
 
-void USCI_reset(){
+void USCI_setup(){
     //Set the bit UCSWRST in register USCI_A0 Control Register 1 
     UCA0CTL1 |= UCSWRST;
 
@@ -57,11 +57,14 @@ void USCI_clk_ref(char clk_ref){
 }
 
 
-void USCI_interrupt_enable(bool enable_USCI_interr){
+void USCI_interrupt_enable(bool enable_USCI_interr_rx, bool enable_USCI_interr_tx){
     IE2 &= ~(UCA0RXIE|UCA0TXIE);
-    if (enable_USCI_interr){
-        IE2 |= UCA0RXIE+UCA0TXIE;                 // Enable USCI_A0 TX/RX interrupt
-    }
+    if (enable_USCI_interr_rx){
+        IE2 |= UCA0RXIE;                 // Enable USCI_A0 RX interrupt
+    }else if (enable_USCI_interr_tx){
+        IE2 |= UCA0TXIE;                 // Enable USCI_A0 TX interrupt
+
+    };
 }
 
 
@@ -607,6 +610,63 @@ void IrDA_decoding_filter(bool IrDA_dec_filter_enabled, int IrDA_Receive_Filter_
             break; 
     }
 }
+
+//*****************************************************************************
+/*SPI RELATED FUNCTIONS*/
+//*****************************************************************************
+
+void SPI_mode_config(char Master_Slave){
+    /*
+    Selection if the controller works as Master (M) or Slave (S)*/
+    UCA0CTL0 &= ~(UCMST);
+    switch (Master_Slave) {
+        case 'M':
+            UCA0CTL0 |= UCMST;
+            break;
+
+        case 'S':
+            break;
+
+        default:
+            perror("Error: Not available SPI mode configuration.");
+            break;
+
+    }
+}
+
+void SPI_char_format(int SPI_length, char first_Byte_sent){
+    UCA0CTL0 &= ~(UC7BIT|UCMSB);
+    switch (SPI_length) {
+        case 7:
+            UCA0CTL0 |= UC7BIT;
+            break;
+        
+        case 8:
+            break;
+
+        default:
+            perror("Error: Not available SPI char length format configuration.");
+            break;
+
+    }
+
+
+    switch (first_Byte_sent) {
+        case 'M':
+            UCA0CTL0 |= UCMSB;
+            break;
+        
+        case 'L':
+            break;
+
+        default:
+            perror("Error: Not available SPI char length format configuration.");
+            break;
+
+    }
+}
+
+
 
 
 

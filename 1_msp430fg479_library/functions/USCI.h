@@ -25,7 +25,7 @@ void init_UART_GPIO();
 
 void USCI_clk_ref(char clk_ref);
 
-void USCI_interrupt_enable(bool enable_USCI_interr);
+void USCI_interrupt_enable(bool enable_USCI_interr_rx, bool enable_USCI_interr_tx);
 
 
 //*****************************************************************************
@@ -68,4 +68,11 @@ void IrDA_pulse_config(char IrDA_clk_ref, int IrDA_Transmit_Pulse_Length);
 // Decoding
 void IrDA_detect_value(int H_L_detect);
 void IrDA_decoding_filter(bool IrDA_dec_filter_enabled, int IrDA_Receive_Filter_Length);
+
+
+//*****************************************************************************
+/*SPI RELATED FUNCTIONS*/
+//*****************************************************************************
+
+void SPI_char_format(int SPI_length, char first_Byte_sent);
 
