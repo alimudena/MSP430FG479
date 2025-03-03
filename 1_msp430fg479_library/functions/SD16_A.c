@@ -126,7 +126,7 @@ void gain_setup(int gain){
 }
 
 
-void clk_reference(char clk_ref) {
+void SD16_clk_reference(char clk_ref) {
     // Clear for not making a mess
     SD16CTL &= ~(SD16SSEL_0|SD16SSEL_1|SD16SSEL_2|SD16SSEL_3);
     switch (clk_ref) {

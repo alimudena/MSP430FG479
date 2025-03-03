@@ -3,6 +3,11 @@
 #include <stdint.h>  // Necesario para uint16_t
 #include "general_functions.h"
 
+//Init MPS --> configure load caps
+void init_MSP(){
+    FLL_CTL0 |= XCAP14PF;                     // Configure load caps
+}
+
 
 //stop watchdog
 void stop_wd(){

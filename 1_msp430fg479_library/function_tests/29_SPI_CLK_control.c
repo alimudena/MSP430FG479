@@ -92,7 +92,7 @@ int main(void)
   volatile unsigned int i;
 
   stop_wd();
-  FLL_CTL0 |= XCAP14PF;                     // Configure load caps
+  init_MSP();                     // Configure load caps
 
   // Wait for xtal to stabilize
   do
@@ -110,8 +110,12 @@ int main(void)
   toggle_setup();								//Setup P4.6 for LED output
 
   USCI_SPI_pin_setup();
-
-  UCA0CTL0 |= UCSYNC+UCCKPL;    //3-pin, 8-bit SPI master
+ 
+  configure_PINS_for_clk_debug();
+  
+  static const char inactive_state = 'H'; // clock polarity inactive high
+  static const char data_on_clock_edge = 'A'; //data cAptured on the first UCLK edge and changed on the following edge
+  SPI_clk_polarity_phase(inactive_state, data_on_clock_edge);
   
   static const int SPI_length = 8;
   static const char first_Byte_sent = 'L';
@@ -121,10 +125,12 @@ int main(void)
   SPI_mode_config(Master_Slave);
 
 
-  UCA0CTL1 |= UCSSEL_2;                     // SMCLK
-  UCA0BR0 = 0x0F;                           // /2
-  UCA0BR1 = 0;                              //
-  UCA0MCTL = 0;                             // No modulation
+  static const char clk_ref = 'S';
+  USCI_clk_ref(clk_ref);                    //CLK reference
+  
+
+  static const int clk_div = 2;
+  SPI_clk_division(clk_div);
 
   
   USCI_init();                     // **Initialize USCI state machine**

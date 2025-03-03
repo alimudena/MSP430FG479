@@ -19,7 +19,7 @@ void voltage_reference(char v_reference);
 
 void gain_setup(int gain); 
 
-void clk_reference(char clk_ref);
+void SD16_clk_reference(char clk_ref);
 void fM_dividers(int div_1, int div_2);
 
 void config_OSR(int OSR);

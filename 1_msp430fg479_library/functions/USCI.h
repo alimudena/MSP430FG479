@@ -78,3 +78,8 @@ void SPI_char_format(int SPI_length, char first_Byte_sent);
 
 void USCI_SPI_pin_setup();
 
+void SPI_mode_config(char Master_Slave);
+
+void SPI_clk_division(int clk_div);
+
+void SPI_clk_polarity_phase(char inactive_state, char data_on_clock_edge);
