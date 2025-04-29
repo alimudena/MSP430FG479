@@ -293,3 +293,16 @@ void DCO_f_range(int DCO_range){
 }
 
 
+void initClockTo8MHz()
+{
+    LFXT1_working_mode('L');
+    LFXT1_internal_cap_config(18);
+    DCO_f_range(4);
+    configuring_DCO(true, 2);
+    configure_N_for_MCLK(121);
+    select_reference_MCLK('D');
+    select_reference_SMCLK('D');
+    configure_ACLK_N(1);
+    LFXT2_disable(false);
+}
+

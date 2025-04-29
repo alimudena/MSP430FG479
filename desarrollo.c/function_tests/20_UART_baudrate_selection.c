@@ -57,7 +57,7 @@
 #define SMCLK_9600      1
 #define ACLK_9600       2
 
-#define UART_MODE       SMCLK_115200//SMCLK_9600//ACLK_9600
+#define UART_MODE       ACLK_9600//SMCLK_115200//SMCLK_9600
 
 char initUART()
 {
@@ -111,7 +111,7 @@ return USCI_clk_ref_sel;
 // Device Initialization *******************************************************
 //******************************************************************************
 
-void initClockTo8MHz()
+void initClockTo8MHz_A()
 {
     volatile unsigned int i;
 
@@ -165,14 +165,14 @@ void main()
     
 
 
-    initClockTo8MHz();
+    initClockTo8MHz_A();
     init_UART_GPIO();
     initUART();
 
     bool parity_enable = false;
     char parity_type = 'O';
-    int num_data_bit = 7;
-    int num_stop_bit = 2;
+    int num_data_bit = 8;
+    int num_stop_bit = 1;
     char first_Byte_sent = 'L';
     character_format_sel(parity_enable, parity_type, num_data_bit, num_stop_bit, first_Byte_sent);
 

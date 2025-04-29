@@ -95,7 +95,7 @@ return USCI_clk_ref_sel;
 // Device Initialization *******************************************************
 //******************************************************************************
 
-void initClockTo8MHz()
+void initClockTo8MHz_A()
 {
     volatile unsigned int i;
 
@@ -149,7 +149,7 @@ void main()
     
 
 
-    initClockTo8MHz();
+    initClockTo8MHz_A();
     init_UART_GPIO();
     char USCI_clk_ref_sel = initUART();
 
