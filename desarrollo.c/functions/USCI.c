@@ -5,6 +5,7 @@
 #include "SD16_A.h"
 #include <assert.h>  // For using assert
 #include <stdbool.h> 
+#include <math.h>
 
 
 //*****************************************************************************
@@ -612,8 +613,8 @@ void IrDA_decoding_filter(bool IrDA_dec_filter_enabled, int IrDA_Receive_Filter_
 //*****************************************************************************
 
 void USCI_SPI_pin_setup(){
-    P2SEL |= 0x30;                            // P2.4,2.5 option select
-    P3SEL |= 0x01;                            // P3.0 option select
+    P2SEL |= BIT4+BIT5;                          // P2.4,2.5 option select
+    P3SEL |= BIT0;                            // P3.0 option select
   }
 
 void SPI_mode_config(char Master_Slave){
@@ -661,13 +662,51 @@ void SPI_char_format(int SPI_length, char first_Byte_sent){
             break;
 
         default:
-            perror("Error: Not available SPI char length format configuration.");
+            perror("Error: Not available SPI char first byte sent format configuration.");
             break;
 
     }
 }
 
+void SPI_clk_division(int clk_div){
+    //UCBRX = UCA0BR0 + UCA0BR1*256;
+    int prod = round(clk_div/256);
+    UCA0BR1 = prod;
+    UCA0BR0 = clk_div-prod*256;
+
+    //reset the modulation value because with USCIA0 is recommended 
+    UCA0MCTL = 0;                             // No modulation
+}
 
 
+void SPI_clk_polarity_phase(char inactive_state, char data_on_clock_edge){
+    UCA0CTL0  &= ~(UCSYNC|UCCKPL);    //3-pin, 8-bit SPI master
+
+    switch (inactive_state) {
+        case 'L': // clock polarity inactive low
+
+            break;
+        
+        case 'H': // clock polarity inactive high
+            UCA0CTL0 |= UCCKPL;
+            break;
+        
+        default: 
+            perror("Error: Not available SPI clock polarity.");
+            break;
+    }
+
+    switch (data_on_clock_edge) {
+        case 'H': //data cHanged on the first UCLK edge and captured on the following edge
+            break;
+        case 'A': //data cAptured on the first UCLK edge and changed on the following edge
+            UCA0CTL0 |= UCSYNC;
+            break;
+        default:
+            perror("Error: Not available SPI clock polarity.");
+            break;
+
+    }
+}
 
 

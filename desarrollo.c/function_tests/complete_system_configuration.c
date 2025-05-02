@@ -60,7 +60,7 @@ int main(void){
 
         toggle_pin();
 
-        switch (interruption) {
+        switch (interruption_SD16A) {
             case false:// if IFG polling is being used:
                 result = IFG_polling();
                 break;
