@@ -24,11 +24,6 @@ void USCI_init(){
 }
 
 
-void init_UART_GPIO()
-{
-    P2SEL = BIT4 | BIT5;                      // P2.5 = RXD, P2.4=TXD
-}
-
 
 void USCI_clk_ref(char clk_ref){
     /*clk_ref:
@@ -68,6 +63,11 @@ void USCI_interrupt_enable(bool enable_USCI_interr_rx, bool enable_USCI_interr_t
 //*****************************************************************************
 /*UART RELATED FUNCTIONS*/
 //*****************************************************************************
+
+void init_UART_GPIO()
+{
+    P2SEL = BIT4 | BIT5;                      // P2.5 = RXD, P2.4=TXD
+}
 
 //Character format decision
 void character_format_sel(bool parity_enable, char parity_type, int num_data_bit, int num_stop_bit, char first_Byte_sent){
