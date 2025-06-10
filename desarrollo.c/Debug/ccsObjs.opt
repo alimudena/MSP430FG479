@@ -1,9 +1,0 @@
-"./function_tests/main.obj"
-"./functions/FLL.obj"
-"./functions/SD16_A.obj"
-"./functions/USCI.obj"
-"./functions/general_functions.obj"
-"./functions/system_config.obj"
-"./functions/toggle_pin.obj"
-"../lnk_msp430fg479.cmd"
--llibc.a
