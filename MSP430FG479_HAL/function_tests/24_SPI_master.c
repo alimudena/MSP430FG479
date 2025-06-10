@@ -79,6 +79,11 @@
 //******************************************************************************
 #include "msp430fg479.h"
 #include <msp430.h>
+#include "../functions/general_functions.h"
+#include "../functions/SD16_A.h"
+#include "../functions/FLL.h"
+#include "../functions/system_config.h"
+#include "../functions/USCI.h"
 
 unsigned char MST_Data,SLV_Data;
 int counter;
@@ -86,7 +91,7 @@ int main(void)
 {
   volatile unsigned int i;
 
-  WDTCTL = WDTPW+WDTHOLD;                   // Stop watchdog timer
+  stop_wd();
   FLL_CTL0 |= XCAP14PF;                     // Configure load caps
 
   // Wait for xtal to stabilize
@@ -102,19 +107,32 @@ int main(void)
   P5OUT = 0x04;                             // P5 setup for slave reset
   P5DIR |= 0x04;                            //
   
-  P4OUT = 0;								//Setup P4.6 for LED output
-  P4DIR |= 0x40;
+  toggle_setup();								//Setup P4.6 for LED output
 
-  P2SEL |= BIT4+BIT5;
-  P3SEL |= BIT0;
-  UCA0CTL0 |= UCMST+UCSYNC+UCCKPL+UCMSB;    //3-pin, 8-bit SPI master
+  USCI_SPI_pin_setup();
+
+  UCA0CTL0 |= UCSYNC+UCCKPL;    //3-pin, 8-bit SPI master
+  
+  static const int SPI_length = 8;
+  static const char first_Byte_sent = 'L';
+  SPI_char_format(SPI_length, first_Byte_sent); //8-bit and MSB SPI 
+
+  static const char Master_Slave = 'M';
+  SPI_mode_config(Master_Slave);
+
+
   UCA0CTL1 |= UCSSEL_2;                     // SMCLK
   UCA0BR0 = 0x0F;                           // /2
   UCA0BR1 = 0;                              //
   UCA0MCTL = 0;                             // No modulation
-  UCA0CTL1 &= ~UCSWRST;                     // **Initialize USCI state machine**
-  IE2 |= UCA0RXIE;                          // Enable USCI_A0 RX interrupt
 
+  
+  USCI_init();                     // **Initialize USCI state machine**
+  
+  static const bool enable_USCI_interr_rx = true; 
+  static const bool enable_USCI_interr_tx = false; 
+  USCI_interrupt_enable(enable_USCI_interr_rx, enable_USCI_interr_tx); // Enable USCI_A0 RX interrupt
+  
   P5OUT &= ~0x04;                           // Now with SPI signals initialized,
   P5OUT |= 0x04;                            // reset slave
 
@@ -123,6 +141,7 @@ int main(void)
   MST_Data = 0x001;                         // Initialize data values
   SLV_Data = 0x000;                         //
 
+  
   UCA0TXBUF = MST_Data;                     // Transmit first character
 
  
