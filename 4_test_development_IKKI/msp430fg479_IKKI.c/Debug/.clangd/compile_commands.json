@@ -1,7 +1,0 @@
-[
-   {
-      "directory" : "D:/Universidad/STRIKE/MSP430FG479/4_test_development_IKKI/msp430fg479_IKKI.c/Debug",
-      "command"   : "clang++ -I\"C:/ti/ccs2002/ccs/ccs_base/msp430/include\" -I\"D:/Universidad/STRIKE/MSP430FG479/4_test_development_IKKI/msp430fg479_IKKI.c\" -I\"C:/ti/ccs2002/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include\" -D__MSP430FG479__",
-      "file"      : "D:/Universidad/STRIKE/MSP430FG479/4_test_development_IKKI/msp430fg479_IKKI.c/Test01_toggle_pin.c"
-   }
-]

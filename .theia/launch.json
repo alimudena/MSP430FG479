@@ -9,6 +9,24 @@
                 "name": "desarrollo.c",
                 "resourceId": "/desarrollo.c"
             }
+        },
+        {
+            "name": "msp430fg479_IKKI.c",
+            "type": "ccs-debug",
+            "request": "launch",
+            "projectInfo": {
+                "name": "msp430fg479_IKKI.c",
+                "resourceId": "/msp430fg479_IKKI.c"
+            }
+        },
+        {
+            "name": "msp430x47x_1.c",
+            "type": "ccs-debug",
+            "request": "launch",
+            "projectInfo": {
+                "name": "msp430x47x_1.c",
+                "resourceId": "/msp430x47x_1.c"
+            }
         }
     ]
 }
