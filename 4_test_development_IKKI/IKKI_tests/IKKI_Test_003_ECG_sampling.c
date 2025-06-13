@@ -143,12 +143,12 @@ SD16A_config_struct SD16A_configuration;
 // -- Tensión de referencia
     SD16A_configuration.v_ref = 'I';            // I: Internal (1.2V), O: Off-chip, E: External
 // -- Reloj de referencia
-    SD16A_configuration.clk_ref = 'M';          // M: MCLK, S: SMCLK, A: ACLK, T: TACLK
+    SD16A_configuration.clk_ref = 'S';          // M: MCLK, S: SMCLK, A: ACLK, T: TACLK
 // -- Divisor de frecuencia de referencia
     SD16A_configuration.clk_div_1 = 1;
     SD16A_configuration.clk_div_2 = 1;
 // -- Método de lectura: Polling o Interrupciones
-    SD16A_configuration.interruption_SD16A = false;
+    SD16A_configuration.interruption_SD16A = true;
 // -- Over Sampling Ratio
     SD16A_configuration.OSR = 1; //1, 32, 64, 128, 256, 512, 1024
 // -- Ganancia
@@ -162,8 +162,8 @@ SD16A_config_struct SD16A_configuration;
   if (CLK_config.CLK_debug == false){
  //****************** FUNCTIONS
 
-    for (counter = SD16A_configuration.analog_input_count-1; counter > 0; counter--) {
-        setup_analog_input(SD16A_configuration.analog_input[counter]);
+    for (counter = SD16A_configuration.analog_input_count; counter > 0; counter--) {
+        setup_analog_input(SD16A_configuration.analog_input[counter-1]);
     }
     select_analog_input(SD16A_configuration.analog_input[0]);
     
@@ -174,16 +174,46 @@ SD16A_config_struct SD16A_configuration;
     SD16_clk_reference(SD16A_configuration.clk_ref); // M: MCLK, S: SMCLK, A: ACLK, T:TACLK
     fM_dividers(SD16A_configuration.clk_div_1, SD16A_configuration.clk_div_2);
     enable_interruption_SD16A(SD16A_configuration.interruption_SD16A);
+    for (i = 0; i < 0x3600; i++);             // Delay for 1.2V ref startup
     config_OSR(SD16A_configuration.OSR);
     gain_setup(SD16A_configuration.gain);    
     conversion_mode(SD16A_configuration.conv_mode); 
     data_format(SD16A_configuration.polarity, SD16A_configuration.sign);
+
+    while(1){
+
+        start_conversion();                    // SET BREAKPOINT HERE
+        enable_interruptions(SD16A_configuration.interruption_SD16A);
+        __bis_SR_register(LPM0_bits);       // Enter LPM0
+    }
+
 }
 
 
 }
 
+#if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
+#pragma vector=SD16A_VECTOR
+__interrupt void SD16ISR(void)
+#elif defined(__GNUC__)
+void __attribute__ ((interrupt(SD16A_VECTOR))) SD16ISR (void)
+#else
+#error Compiler not supported!
+#endif
+{
+  switch (SD16IV)
+  {
+  case 2:                                   // SD16MEM Overflow
+    break;
+  case 4:                                   // SD16MEM0 IFG
+    result = SD16MEM0;                      // Save CH0 results (clears IFG)
+    break;
+  }
 
+  __bic_SR_register_on_exit(LPM0_bits);                   // Exit LPM0
+}
+
+/*
     #if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
     #pragma vector=SD16A_VECTOR
     __interrupt void SD16ISR(void)
@@ -209,3 +239,4 @@ SD16A_config_struct SD16A_configuration;
     }
 
     }
+*/
