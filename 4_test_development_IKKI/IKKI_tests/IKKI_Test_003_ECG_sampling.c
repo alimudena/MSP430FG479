@@ -185,6 +185,7 @@ SD16A_config_struct SD16A_configuration;
         start_conversion();                    // SET BREAKPOINT HERE
         enable_interruptions(SD16A_configuration.interruption_SD16A);
         __bis_SR_register(LPM0_bits);       // Enter LPM0
+        
     }
 
 }
