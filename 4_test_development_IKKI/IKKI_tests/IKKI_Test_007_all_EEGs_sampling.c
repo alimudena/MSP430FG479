@@ -1,9 +1,9 @@
 /**
- * @test Sample the ECG signal
- * @brief Test that confirms that the ECG is being sampled.
+ * @test Sample the EEG 1 signal
+ * @brief Test that confirms that the EEG in channel 1 is being sampled.
  * 
  * @details
- * After programming the platform, the pins associated to the ECG input should present the result of sampling one sample. 
+ * After programming the platform, the pins associated to the EEG of channel 1 input should present the result of sampling one sample. 
  *             MSP430FG479
  *           -----------------
  *      /|\ |              XIN|---+
@@ -13,15 +13,22 @@
  *          |             XOUT|---+
  *          |             P1.1|--> MCLK = 8Mhz  --> 57 (referencia DCO)
  *          |             P1.4|--> SMCLK = 8MHz --> 54 (referencia DCO)
- *          |             P1.5|--> ACLK = 32kHz --> 51
- *          |             P6.0|<------- A0+: ECG positive input --> 67
- *          |             P6.1|<------- A0-: ECG negative input --> 66
+
+ *          |             P1.5|<------- A3+: ECG1 positive input --> 51
+ *          |             P1.4|<------- A3-: ECG1 negative input --> 54
+
+ *          |             P1.7|<------- A2+: ECG2 positive input --> 49
+ *          |             P1.6|<------- A2-: ECG2 negative input --> 50
+
+ *          |             P6.3|<------- A1+: ECG3 positive input --> 64
+ *          |             P6.4|<------- A1-: ECG3 negative input --> 63
+
  *          |                 |
  *          |                 |
  * 
  * @expected
- * The pins number 57, 54 and 51 shold present the clocks configured. 
- * The purpose of pin number 51 is to confirm that the external oscillator is correctly connected.
+ * The pins number 51 and 54 should present signals of the EEG. 
+ * WARNING: IT IS NOT POSSIBLE TO EVALUATE ACLK AT THE SAME TIME: P1.5 CONTAINS THE ACLK TOO
  */
 
 
@@ -41,14 +48,11 @@ INCLUDES
 #include "SD16A_config.h"
 
 
-unsigned int result;
-#define   Num_of_Results   200
-unsigned index = 0;
+unsigned int result[3];
 CLK_config_struct CLK_config;
 unsigned counter;
 
-float results[Num_of_Results];
-float result_graphed;
+SD16A_config_struct SD16A_configuration;
 volatile unsigned int i;                  // Use volatile to prevent removal
 
 void general_setup(){
@@ -151,19 +155,24 @@ int main(void){
 
     general_setup();
     setup_CLK();
+
+
     //***************************************************************************** 
     /*SETUP SD16A*/
     //*****************************************************************************
 
-    SD16A_config_struct SD16A_configuration;
 
     // -- Entrada analógica
-        SD16A_configuration.analog_input_count = 1;
-        SD16A_configuration.analog_input[0] = 0; //0: A0, 1: A1, 2: A2, 3: A3, 4: A4
+        SD16A_configuration.analog_input_count = 3;
+        SD16A_configuration.analog_input_being_sampled = 0;
+
+        SD16A_configuration.analog_input[0] = 3; //3: A3 - ECG1
+        SD16A_configuration.analog_input[1] = 2; //2: A2 - ECG2
+        SD16A_configuration.analog_input[2] = 1; //1: A1 - ECG3
     // -- Tensión de referencia
         SD16A_configuration.v_ref = 'I';            // I: Internal (1.2V), O: Off-chip, E: External
     // -- Reloj de referencia
-        SD16A_configuration.clk_ref = 'M';          // M: MCLK, S: SMCLK, A: ACLK, T: TACLK
+        SD16A_configuration.clk_ref = 'M';          // M: MCLK, S: SMCLK, A: AC1LK, T: TACLK
     // -- Divisor de frecuencia de referencia
         SD16A_configuration.clk_div_1 = 1;
         SD16A_configuration.clk_div_2 = 1;
@@ -179,14 +188,16 @@ int main(void){
         SD16A_configuration.polarity = 'U';       // B : Bipolar, U : unipolar
         SD16A_configuration.sign = 'O';           // O : Offset, C : 2's complement
 
+        SD16A_configuration.sampled = false;
+
     if (CLK_config.CLK_debug == false){
     //****************** FUNCTIONS
 
         for (counter = SD16A_configuration.analog_input_count; counter > 0; counter--) {
             setup_analog_input(SD16A_configuration.analog_input[counter-1]);
         }
-        select_analog_input(SD16A_configuration.analog_input[0]);
-        
+        select_analog_input(SD16A_configuration.analog_input[SD16A_configuration.analog_input_being_sampled]);
+        SD16A_configuration.analog_input_being_sampled++;
         FLL_CTL0 |= XCAP14PF;                     // Configure load caps
         for (i = 10000; i >0 ; i--);              // Delay for 32 kHz crystal to
 
@@ -201,14 +212,24 @@ int main(void){
         data_format(SD16A_configuration.polarity, SD16A_configuration.sign);
 
         while(1){
-
+            if (SD16A_configuration.analog_input_being_sampled == SD16A_configuration.analog_input_count){
+                SD16A_configuration.analog_input_being_sampled = 0;
+            }
             start_conversion();                    // SET BREAKPOINT HERE
-            enable_interruptions(SD16A_configuration.interruption_SD16A);
+            enable_interruptions(SD16A_configuration.interruption_SD16A);        
+            if (SD16A_configuration.sampled){
+                select_analog_input(SD16A_configuration.analog_input[SD16A_configuration.analog_input_being_sampled]);
+                SD16A_configuration.analog_input_being_sampled++;
+                SD16A_configuration.sampled = false;
+
+            }
         //__bis_SR_register(LPM0_bits);       // Enter LPM0
             
         }
 
-    }
+}
+
+
 }
 
 #if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
@@ -225,14 +246,8 @@ void __attribute__ ((interrupt(SD16A_VECTOR))) SD16ISR (void)
   case 2:                                   // SD16MEM Overflow
     break;
   case 4:                                   // SD16MEM0 IFG
-    result = SD16MEM0;                      // Save CH0 results (clears IFG)
-    result_graphed = result*0.6/65536;
-
-    results[index] = result*0.6/65536;
-
-    if (++index == Num_of_Results){
-    	index = 0;                            
-    }
+    result[SD16A_configuration.analog_input_being_sampled] = SD16MEM0;                      // Save CH0 results (clears IFG)
+    SD16A_configuration.sampled = true;
     break;
 
   }

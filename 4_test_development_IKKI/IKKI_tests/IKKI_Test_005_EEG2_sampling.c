@@ -1,9 +1,9 @@
 /**
- * @test Sample the ECG signal
- * @brief Test that confirms that the ECG is being sampled.
+ * @test Sample the EEG 1 signal
+ * @brief Test that confirms that the EEG in channel 1 is being sampled.
  * 
  * @details
- * After programming the platform, the pins associated to the ECG input should present the result of sampling one sample. 
+ * After programming the platform, the pins associated to the EEG of channel 1 input should present the result of sampling one sample. 
  *             MSP430FG479
  *           -----------------
  *      /|\ |              XIN|---+
@@ -13,15 +13,14 @@
  *          |             XOUT|---+
  *          |             P1.1|--> MCLK = 8Mhz  --> 57 (referencia DCO)
  *          |             P1.4|--> SMCLK = 8MHz --> 54 (referencia DCO)
- *          |             P1.5|--> ACLK = 32kHz --> 51
- *          |             P6.0|<------- A0+: ECG positive input --> 67
- *          |             P6.1|<------- A0-: ECG negative input --> 66
+ *          |             P1.7|<------- A2+: ECG positive input --> 49
+ *          |             P1.6|<------- A2-: ECG negative input --> 50
  *          |                 |
  *          |                 |
  * 
  * @expected
- * The pins number 57, 54 and 51 shold present the clocks configured. 
- * The purpose of pin number 51 is to confirm that the external oscillator is correctly connected.
+ * The pins number 51 and 54 should present signals of the EEG. 
+ * WARNING: IT IS NOT POSSIBLE TO EVALUATE ACLK AT THE SAME TIME: P1.5 CONTAINS THE ACLK TOO
  */
 
 
@@ -49,6 +48,7 @@ unsigned counter;
 
 float results[Num_of_Results];
 float result_graphed;
+
 volatile unsigned int i;                  // Use volatile to prevent removal
 
 void general_setup(){
@@ -151,6 +151,7 @@ int main(void){
 
     general_setup();
     setup_CLK();
+
     //***************************************************************************** 
     /*SETUP SD16A*/
     //*****************************************************************************
@@ -159,7 +160,7 @@ int main(void){
 
     // -- Entrada analógica
         SD16A_configuration.analog_input_count = 1;
-        SD16A_configuration.analog_input[0] = 0; //0: A0, 1: A1, 2: A2, 3: A3, 4: A4
+        SD16A_configuration.analog_input[0] = 2; //0: A0, 1: A1, 2: A2, 3: A3, 4: A4
     // -- Tensión de referencia
         SD16A_configuration.v_ref = 'I';            // I: Internal (1.2V), O: Off-chip, E: External
     // -- Reloj de referencia
@@ -209,6 +210,8 @@ int main(void){
         }
 
     }
+
+
 }
 
 #if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
