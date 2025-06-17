@@ -38,6 +38,7 @@ INCLUDES
 #include "../functions/SD16_A.h"
 #include "clk_config.h"
 #include "SD16A_config.h"
+#include "IKKI_MAC.h"
 
 
 unsigned int result;
@@ -160,7 +161,7 @@ int main(void){
 
     // -- Entrada analógica
         SD16A_configuration.analog_input_count = 1;
-        SD16A_configuration.analog_input[0] = 2; //0: A0, 1: A1, 2: A2, 3: A3, 4: A4
+        SD16A_configuration.analog_input[0] = EEG2; //0: A0, 1: A1, 2: A2, 3: A3, 4: A4
     // -- Tensión de referencia
         SD16A_configuration.v_ref = 'I';            // I: Internal (1.2V), O: Off-chip, E: External
     // -- Reloj de referencia
@@ -229,9 +230,9 @@ void __attribute__ ((interrupt(SD16A_VECTOR))) SD16ISR (void)
     break;
   case 4:                                   // SD16MEM0 IFG
     result = SD16MEM0;                      // Save CH0 results (clears IFG)
-    result_graphed = result*0.6/65536;
+    result_graphed = result;
 
-    results[index] = result*0.6/65536;
+    results[index] = result;
 
     if (++index == Num_of_Results){
     	index = 0;                            

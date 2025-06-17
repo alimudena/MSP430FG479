@@ -39,6 +39,7 @@ INCLUDES
 #include "../functions/SD16_A.h"
 #include "clk_config.h"
 #include "SD16A_config.h"
+#include "IKKI_MAC.h"
 
 
 unsigned int result;
@@ -164,8 +165,8 @@ SD16A_config_struct SD16A_configuration;
 
 // -- Entrada analógica
     SD16A_configuration.analog_input_count = 1;
-    SD16A_configuration.analog_input[0] = 1; //0: A0, 1: A1, 2: A2, 3: A3, 4: A4
-    SD16A_configuration.analog_input_sampled = 0;
+    SD16A_configuration.analog_input[0] = EEG3; //0: A0, 1: A1, 2: A2, 3: A3, 4: A4
+    SD16A_configuration.analog_input_being_sampled = 0;
 // -- Tensión de referencia
     SD16A_configuration.v_ref = 'I';            // I: Internal (1.2V), O: Off-chip, E: External
 // -- Reloj de referencia
@@ -210,7 +211,7 @@ SD16A_config_struct SD16A_configuration;
 
         start_conversion();                    // SET BREAKPOINT HERE
         enable_interruptions(SD16A_configuration.interruption_SD16A);
-        SD16A_configuration.analog_input_sampled++;
+        SD16A_configuration.analog_input_being_sampled++;
        //__bis_SR_register(LPM0_bits);       // Enter LPM0
         
     }

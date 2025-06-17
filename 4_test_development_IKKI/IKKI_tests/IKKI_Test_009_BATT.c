@@ -13,8 +13,22 @@
  *          |             XOUT|---+
  *          |             P1.1|--> MCLK = 8Mhz  --> 57 (referencia DCO)
  *          |             P1.4|--> SMCLK = 8MHz --> 54 (referencia DCO)
- *          |             P1.5|<------- A3+: ECG positive input --> 51
- *          |             P1.4|<------- A3-: ECG negative input --> 54
+
+ *          |             P1.5|<------- A3+: EEG1 positive input --> 51
+ *          |             P1.4|<------- A3-: EEG1 negative input --> 54
+
+ *          |             P1.7|<------- A2+: EEG2 positive input --> 49
+ *          |             P1.6|<------- A2-: EEG2 negative input --> 50
+
+ *          |             P6.3|<------- A1+: EEG3 positive input --> 64
+ *          |             P6.4|<------- A1-: EEG3 negative input --> 63
+
+ *          |             P6.0|<------- A0+: ECG positive input --> 67
+ *          |             P6.1|<------- A0-: ECG negative input --> 66
+ 
+ *          |             P1.3|<------- A4+: BATT positive input --> 55
+ *          |             P1.2|<------- A4-: BATT negative input --> 56
+
  *          |                 |
  *          |                 |
  * 
@@ -41,15 +55,13 @@ INCLUDES
 #include "IKKI_MAC.h"
 
 
-unsigned int result;
-#define   Num_of_Results   200
-unsigned index = 0;
+unsigned int result[1];
 CLK_config_struct CLK_config;
 unsigned counter;
 
-float results[Num_of_Results];
-float result_graphed;
+SD16A_config_struct SD16A_configuration;
 volatile unsigned int i;                  // Use volatile to prevent removal
+int alert_level;
 
 void general_setup(){
 
@@ -149,6 +161,7 @@ void setup_CLK(){
 
 int main(void){
 
+    toggle_setup();
     general_setup();
     setup_CLK();
 
@@ -157,15 +170,17 @@ int main(void){
     /*SETUP SD16A*/
     //*****************************************************************************
 
-    SD16A_config_struct SD16A_configuration;
 
     // -- Entrada analógica
         SD16A_configuration.analog_input_count = 1;
-        SD16A_configuration.analog_input[0] = EEG1; //0: A0, 1: A1, 2: A2, 3: A3, 4: A4
+        SD16A_configuration.analog_input_being_sampled = 0;
+
+        SD16A_configuration.analog_input[0] = BATT; //4: A4 - BATT
+
     // -- Tensión de referencia
         SD16A_configuration.v_ref = 'I';            // I: Internal (1.2V), O: Off-chip, E: External
     // -- Reloj de referencia
-        SD16A_configuration.clk_ref = 'M';          // M: MCLK, S: SMCLK, A: ACLK, T: TACLK
+        SD16A_configuration.clk_ref = 'M';          // M: MCLK, S: SMCLK, A: AC1LK, T: TACLK
     // -- Divisor de frecuencia de referencia
         SD16A_configuration.clk_div_1 = 1;
         SD16A_configuration.clk_div_2 = 1;
@@ -181,14 +196,15 @@ int main(void){
         SD16A_configuration.polarity = 'U';       // B : Bipolar, U : unipolar
         SD16A_configuration.sign = 'O';           // O : Offset, C : 2's complement
 
+        SD16A_configuration.sampled = false;
+
     if (CLK_config.CLK_debug == false){
     //****************** FUNCTIONS
 
         for (counter = SD16A_configuration.analog_input_count; counter > 0; counter--) {
             setup_analog_input(SD16A_configuration.analog_input[counter-1]);
         }
-        select_analog_input(SD16A_configuration.analog_input[0]);
-        
+        select_analog_input(SD16A_configuration.analog_input[SD16A_configuration.analog_input_being_sampled]);
         FLL_CTL0 |= XCAP14PF;                     // Configure load caps
         for (i = 10000; i >0 ; i--);              // Delay for 32 kHz crystal to
 
@@ -205,12 +221,23 @@ int main(void){
         while(1){
 
             start_conversion();                    // SET BREAKPOINT HERE
-            enable_interruptions(SD16A_configuration.interruption_SD16A);
+            enable_interruptions(SD16A_configuration.interruption_SD16A);        
+            if (SD16A_configuration.sampled){
+                select_analog_input(SD16A_configuration.analog_input[SD16A_configuration.analog_input_being_sampled]);
+
+                SD16A_configuration.sampled = false;
+
+            }
+            if(alert_level == ALERT_LEVEL_1){
+                OFF_pin();
+            }else{
+                toggle_pin();
+            }
         //__bis_SR_register(LPM0_bits);       // Enter LPM0
             
         }
 
-    }
+}
 
 
 }
@@ -229,14 +256,18 @@ void __attribute__ ((interrupt(SD16A_VECTOR))) SD16ISR (void)
   case 2:                                   // SD16MEM Overflow
     break;
   case 4:                                   // SD16MEM0 IFG
-    result = SD16MEM0;                      // Save CH0 results (clears IFG)
-    result_graphed = result;
-
-    results[index] = result;
-
-    if (++index == Num_of_Results){
-    	index = 0;                            
+    result[SD16A_configuration.analog_input_being_sampled] = SD16MEM0;                      // Save CH0 results (clears IFG)
+    if (result[SD16A_configuration.analog_input_being_sampled] > 32767){
+        alert_level = ALERT_LEVEL_2;
+    }else{
+        alert_level = ALERT_LEVEL_1;        
     }
+
+    SD16A_configuration.analog_input_being_sampled++;
+    if (SD16A_configuration.analog_input_being_sampled == SD16A_configuration.analog_input_count){
+        SD16A_configuration.analog_input_being_sampled = 0;
+    }
+    SD16A_configuration.sampled = true;
     break;
 
   }

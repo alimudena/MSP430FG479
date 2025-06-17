@@ -14,14 +14,14 @@
  *          |             P1.1|--> MCLK = 8Mhz  --> 57 (referencia DCO)
  *          |             P1.4|--> SMCLK = 8MHz --> 54 (referencia DCO)
 
- *          |             P1.5|<------- A3+: ECG1 positive input --> 51
- *          |             P1.4|<------- A3-: ECG1 negative input --> 54
+ *          |             P1.5|<------- A3+: EEG1 positive input --> 51
+ *          |             P1.4|<------- A3-: EEG1 negative input --> 54
 
- *          |             P1.7|<------- A2+: ECG2 positive input --> 49
- *          |             P1.6|<------- A2-: ECG2 negative input --> 50
+ *          |             P1.7|<------- A2+: EEG2 positive input --> 49
+ *          |             P1.6|<------- A2-: EEG2 negative input --> 50
 
- *          |             P6.3|<------- A1+: ECG3 positive input --> 64
- *          |             P6.4|<------- A1-: ECG3 negative input --> 63
+ *          |             P6.3|<------- A1+: EEG3 positive input --> 64
+ *          |             P6.4|<------- A1-: EEG3 negative input --> 63
 
  *          |                 |
  *          |                 |
@@ -46,6 +46,7 @@ INCLUDES
 #include "../functions/SD16_A.h"
 #include "clk_config.h"
 #include "SD16A_config.h"
+#include "IKKI_MAC.h"
 
 
 unsigned int result[3];
@@ -166,9 +167,9 @@ int main(void){
         SD16A_configuration.analog_input_count = 3;
         SD16A_configuration.analog_input_being_sampled = 0;
 
-        SD16A_configuration.analog_input[0] = 3; //3: A3 - ECG1
-        SD16A_configuration.analog_input[1] = 2; //2: A2 - ECG2
-        SD16A_configuration.analog_input[2] = 1; //1: A1 - ECG3
+        SD16A_configuration.analog_input[0] = EEG1; //3: A3 - EEG1
+        SD16A_configuration.analog_input[1] = EEG2; //2: A2 - EEG2
+        SD16A_configuration.analog_input[2] = EEG3; //1: A1 - EEG3
     // -- Tensión de referencia
         SD16A_configuration.v_ref = 'I';            // I: Internal (1.2V), O: Off-chip, E: External
     // -- Reloj de referencia
@@ -197,7 +198,6 @@ int main(void){
             setup_analog_input(SD16A_configuration.analog_input[counter-1]);
         }
         select_analog_input(SD16A_configuration.analog_input[SD16A_configuration.analog_input_being_sampled]);
-        SD16A_configuration.analog_input_being_sampled++;
         FLL_CTL0 |= XCAP14PF;                     // Configure load caps
         for (i = 10000; i >0 ; i--);              // Delay for 32 kHz crystal to
 
@@ -212,14 +212,12 @@ int main(void){
         data_format(SD16A_configuration.polarity, SD16A_configuration.sign);
 
         while(1){
-            if (SD16A_configuration.analog_input_being_sampled == SD16A_configuration.analog_input_count){
-                SD16A_configuration.analog_input_being_sampled = 0;
-            }
+
             start_conversion();                    // SET BREAKPOINT HERE
             enable_interruptions(SD16A_configuration.interruption_SD16A);        
             if (SD16A_configuration.sampled){
                 select_analog_input(SD16A_configuration.analog_input[SD16A_configuration.analog_input_being_sampled]);
-                SD16A_configuration.analog_input_being_sampled++;
+
                 SD16A_configuration.sampled = false;
 
             }
@@ -247,6 +245,10 @@ void __attribute__ ((interrupt(SD16A_VECTOR))) SD16ISR (void)
     break;
   case 4:                                   // SD16MEM0 IFG
     result[SD16A_configuration.analog_input_being_sampled] = SD16MEM0;                      // Save CH0 results (clears IFG)
+    SD16A_configuration.analog_input_being_sampled++;
+    if (SD16A_configuration.analog_input_being_sampled == SD16A_configuration.analog_input_count){
+        SD16A_configuration.analog_input_being_sampled = 0;
+    }
     SD16A_configuration.sampled = true;
     break;
 

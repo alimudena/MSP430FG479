@@ -1,6 +1,5 @@
 #ifndef SD16A_CONFIG_H
 #define SD16A_CONFIG_H
-
 typedef struct{
         // -- Entrada analógica
     int analog_input[5]; //0: A0, 1: A1, 2: A2, 3: A3, 4: A4

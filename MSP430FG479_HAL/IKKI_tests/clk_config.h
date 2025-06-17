@@ -1,6 +1,5 @@
 #ifndef CLK_CONFIG_H
 #define CLK_CONFIG_H
-
 typedef struct{
     char operating_mode; //Modo de operación
     char LFXT1_wk_mode; //Oscilador LFXT1
