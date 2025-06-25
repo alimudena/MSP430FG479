@@ -1,9 +1,4 @@
 /**
- * @test Sample the EEG 1 signal
- * @brief Test that confirms that the EEG in channel 1 is being sampled.
- * 
- * @details
- * After programming the platform, the pins associated to the EEG of channel 1 input should present the result of sampling one sample. 
  *             MSP430FG479
  *           -----------------
  *      /|\ |              XIN|---+
@@ -32,9 +27,6 @@
  *          |                 |
  *          |                 |
  * 
- * @expected
- * The pins number 51 and 54 should present signals of the EEG. 
- * WARNING: IT IS NOT POSSIBLE TO EVALUATE ACLK AT THE SAME TIME: P1.5 CONTAINS THE ACLK TOO
  */
 
 

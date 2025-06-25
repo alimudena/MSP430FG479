@@ -3,6 +3,7 @@
 typedef struct{
         // -- Entrada analógica
     int analog_input[5]; //0: A0, 1: A1, 2: A2, 3: A3, 4: A4
+    int analog_input_ID[5]; //0: A0, 1: A1, 2: A2, 3: A3, 4: A4
     int analog_input_count;
     unsigned int analog_input_being_sampled;
         // -- Tensión de referencia

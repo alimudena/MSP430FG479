@@ -149,15 +149,7 @@ void setup_CLK(){
 
 }
 
-
-
-int main(void){
-
-    toggle_setup();
-    general_setup();
-    setup_CLK();
-
-
+void setup_SD16A(){
     //***************************************************************************** 
     /*SETUP SD16A*/
     //*****************************************************************************
@@ -194,9 +186,6 @@ int main(void){
 
         SD16A_configuration.sampled = false;
 
-    if (CLK_config.CLK_debug == false){
-    //****************** FUNCTIONS
-
         for (counter = SD16A_configuration.analog_input_count; counter > 0; counter--) {
             setup_analog_input(SD16A_configuration.analog_input[counter-1]);
         }
@@ -213,6 +202,19 @@ int main(void){
         gain_setup(SD16A_configuration.gain);    
         conversion_mode(SD16A_configuration.conv_mode); 
         data_format(SD16A_configuration.polarity, SD16A_configuration.sign);
+
+}
+
+int main(void){
+
+    toggle_setup();
+    general_setup();
+    setup_CLK();
+
+
+    
+    if (CLK_config.CLK_debug == false){
+    setup_SD16A();
 
         while(1){
 

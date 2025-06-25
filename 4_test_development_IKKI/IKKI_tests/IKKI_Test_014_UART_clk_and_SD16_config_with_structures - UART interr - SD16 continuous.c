@@ -1,0 +1,381 @@
+
+//                   MSP430FG479
+//                 -----------------
+//            /|\ |              XIN|---+
+//             |  |                 |   |
+//             ---|RST              |   32kHz
+//                |                 |   |
+//                |             XOUT|---+
+//                |             P1.1|--> MCLK = 8Mhz  --> 57 (referencia DCO)
+//                |             P1.4|--> SMCLK = 8MHz --> 54 (referencia DCO)
+//                |             P1.5|--> ACLK = 32kHz --> 51
+//                |                 |
+//                |             P2.5|<------- Receive Data (UCA0RXD) --> 75
+//                |             P2.4|-------> Transmit Data (UCA0TXD) --> 76
+//                |                 |
+
+//                |             P1.5|<------- A3+: EEG1 positive input --> 51 azul oscuro 
+//                |             P1.4|<------- A3-: EEG1 negative input --> 54
+
+//                |             P1.7|<------- A2+: EEG2 positive input --> 49 rosa
+//                |             P1.6|<------- A2-: EEG2 negative input --> 50
+
+//                |             P6.3|<------- A1+: EEG3 positive input --> 64 gris
+//                |             P6.4|<------- A1-: EEG3 negative input --> 63
+
+//                |             P6.0|<------- A0+: ECG positive input --> 67 blanco
+//                |             P6.1|<------- A0-: ECG negative input --> 66
+
+//                |             P1.3|<------- A4+: BATT positive input --> 55 azul claro batería
+//                |             P1.2|<------- A4-: BATT negative input --> 56
+ 
+//                |                 |
+
+//******************************************************************************
+
+#include <msp430.h>
+#include <stdint.h>
+
+#include "../functions/general_functions.h"
+#include "../functions/SD16_A.h"
+#include "../functions/system_config.h"
+#include "../functions/USCI.h"
+#include "../functions/FLL.h"
+
+#include "clk_config.h"
+#include "UART_config.h"
+#include "SD16A_config.h"
+#include "IKKI_MAC.h"
+
+unsigned int result;
+uint16_t tx_val = 0;
+uint8_t high_word = 0;
+uint8_t low_word = 0;
+uint16_t my_register = 0;
+bool high_or_low = true;
+bool state = 0;
+int test = 0;
+unsigned counter;
+int i;
+
+CLK_config_struct CLK_config;
+SD16A_config_struct SD16A_configuration;
+UART_config_struct UART_config;
+
+void general_setup(){
+
+    //***************************************************************************** 
+    /*GENERAL SETUP*/
+    //*****************************************************************************
+
+    stop_wd();
+    CLK_config.CLK_debug = false;
+    if (CLK_config.CLK_debug)
+    {
+        configure_PINS_for_clk_debug();
+        //setup pin for led for toggle
+        toggle_setup();
+    }
+}
+
+void setup_CLK(){
+    //***************************************************************************** 
+    /*SETUP CLK*/
+    /*For generating the 8MHz:
+        CLK_config.operating_mode = 'A';
+        CLK_config.LFXT1_wk_mode = 'L';
+        CLK_config.DCO_range = 4;  
+        CLK_config.DCOPLUS_on = true; //If D factor is wanted to be applied then -> True
+        CLK_config.D_val = 2; //Max 8
+        CLK_config.N_MCLK = 121; //Max 127
+        CLK_config.ref_MCLK = 'D'; //  D: DCO, X: XT2, A: LFXT1
+        CLK_config.ref_SMCLK = 'D'; // D: DCO, X: XT2, N: OFF
+        CLK_config.divider_ACLK = 1; // 1, 2, 4, 8
+        CLK_config.LFXT2_osc_on = false;
+    */
+    //*****************************************************************************
+
+    //Modo de operación
+    /*    mode:
+            - A: Active
+            - L: Low Power
+                - 0: LPM0
+                - 1: LPM1
+                - 2: LPM2 
+                - 3: LPM3
+    */
+        CLK_config.operating_mode = 'A';
+        select_operating_mode(CLK_config.operating_mode, 0);
+    //Oscilador LFXT1
+    /*
+        L: Low Frequency Mode --> f auxiliar de 323kHz conectado
+        H: High Frequency Mode
+    */
+        CLK_config.LFXT1_wk_mode = 'L';
+    //Configura la capacidad interna del LFXT1
+    /*0  --> XIN Cap = XOUT Cap = 0pf */
+    /*10 --> XIN Cap = XOUT Cap = 10pf */
+    /*14 --> XIN Cap = XOUT Cap = 14pf */
+    /*18 --> XIN Cap = XOUT Cap = 18pf */
+        CLK_config.LFXT1_int_cap = 18;
+        LFXT1_working_mode(CLK_config.LFXT1_wk_mode);
+        LFXT1_internal_cap_config(CLK_config.LFXT1_int_cap);
+    //DCO
+    //Rango de frecuencia de trabajo del DCO:
+        /*2 --> fDCOCLK =   1.4-12MHz*/
+        /*3 --> fDCOCLK =   2.2-17Mhz*/
+        /*4 --> fDCOCLK =   3.2-25Mhz*/ //-> 8 MHz
+        /*8 --> fDCOCLK =     5-40Mhz*/
+        CLK_config.DCO_range = 4;  
+        DCO_f_range(CLK_config.DCO_range);
+    // Values for setting the frequency of the DCO+
+    // DCO+ set so freq= xtal x D x N_MCLK+1 
+    //XTAL --> 32767Hz
+        CLK_config.DCOPLUS_on = true; //If D factor is wanted to be applied then -> True
+        CLK_config.D_val = 2; //Max 8
+        CLK_config.N_MCLK = 121; //Max 127
+        configuring_DCO(CLK_config.DCOPLUS_on, CLK_config.D_val);
+        configure_N_for_MCLK(CLK_config.N_MCLK);
+    //MCLK
+    //Reference selection for MCLK
+        CLK_config.ref_MCLK = 'D'; //  D: DCO, X: XT2, A: LFXT1
+        select_reference_MCLK(CLK_config.ref_MCLK);
+    //SMCLK
+    // Reference for SMCLK
+        CLK_config.ref_SMCLK = 'D'; // D: DCO, X: XT2, N: OFF
+        select_reference_SMCLK(CLK_config.ref_SMCLK);
+    //ACLK
+    //ACLK division for configuring ACLK/N
+        CLK_config.divider_ACLK = 1; // 1, 2, 4, 8
+        configure_ACLK_N(CLK_config.divider_ACLK);
+    // LFXT2
+    //Second oscillator ON OFF
+        CLK_config.LFXT2_osc_on = false;
+        LFXT2_disable(CLK_config.LFXT2_osc_on);
+
+}
+
+void setup_SD16A(){
+    //***************************************************************************** 
+    /*SETUP SD16A*/
+    //*****************************************************************************
+
+
+    // -- Entrada analógica
+        SD16A_configuration.analog_input_count = 1;
+        SD16A_configuration.analog_input_being_sampled = 0;
+
+        SD16A_configuration.analog_input[0] = EEG1; //3: A3 - EEG1
+        SD16A_configuration.analog_input[1] = EEG2; //2: A2 - EEG2
+        SD16A_configuration.analog_input[2] = EEG3; //1: A1 - EEG3
+        SD16A_configuration.analog_input[3] = ECG;  //0: A0 - ECG
+        SD16A_configuration.analog_input[4] = BATT; //4: A4 - BATT
+
+    // -- Tensión de referencia
+        SD16A_configuration.v_ref = 'I';            // I: Internal (1.2V), O: Off-chip, E: External
+    // -- Reloj de referencia
+        SD16A_configuration.clk_ref = 'M';          // M: MCLK, S: SMCLK, A: AC1LK, T: TACLK
+    // -- Divisor de frecuencia de referencia
+        SD16A_configuration.clk_div_1 = 1;
+        SD16A_configuration.clk_div_2 = 1;
+    // -- Método de lectura: Polling o Interrupciones
+        SD16A_configuration.interruption_SD16A = true;
+    // -- Over Sampling Ratio
+        SD16A_configuration.OSR = 512; //1, 32, 64, 128, 256, 512, 1024
+    // -- Ganancia
+        SD16A_configuration.gain = 1; //1, 2, 4, 8, 16 or 32
+    // -- Método de conversión
+        SD16A_configuration.conv_mode = 'C'; // C: Continuous  S: Single
+    // -- Tipo de datos
+        SD16A_configuration.polarity = 'B';       // B : Bipolar, U : unipolar
+        SD16A_configuration.sign = 'O';           // O : Offset, C : 2's complement
+
+        SD16A_configuration.sampled = false;
+
+        for (counter = SD16A_configuration.analog_input_count; counter > 0; counter--) {
+            setup_analog_input(SD16A_configuration.analog_input[counter-1]);
+        }
+        select_analog_input(SD16A_configuration.analog_input[SD16A_configuration.analog_input_being_sampled]);
+        FLL_CTL0 |= XCAP14PF;                     // Configure load caps
+        for (i = 10000; i >0 ; i--);              // Delay for 32 kHz crystal to
+
+        voltage_reference(SD16A_configuration.v_ref);
+        SD16_clk_reference(SD16A_configuration.clk_ref); // M: MCLK, S: SMCLK, A: ACLK, T:TACLK
+        fM_dividers(SD16A_configuration.clk_div_1, SD16A_configuration.clk_div_2);
+        enable_interruption_SD16A(SD16A_configuration.interruption_SD16A);
+        for (i = 10000; i >0 ; i--);             // Delay for 1.2V ref startup
+        config_OSR(SD16A_configuration.OSR);
+        gain_setup(SD16A_configuration.gain);    
+        conversion_mode(SD16A_configuration.conv_mode); 
+        data_format(SD16A_configuration.polarity, SD16A_configuration.sign);
+
+}
+
+void setup_UART(){
+    //******************************************************************************
+    // UART Initialization *********************************************************
+    //******************************************************************************
+
+    /*
+		- A: Active
+		- L: Low Power
+            - 0: LPM0
+            - 1: LPM1
+            - 2: LPM2 
+            - 3: LPM3
+    */
+    UART_config.operating_mode = 'A';
+    select_operating_mode(UART_config.operating_mode, 0);
+
+    enable_interruptions(true);
+
+
+    //Init UART related peripherics
+    init_UART_GPIO();
+
+    //Config UART
+    /*clk_ref:
+        U --> UCLK
+        A --> ACLK
+        S --> SMCLK        
+    */
+    UART_config.USCI_clk_ref_sel = 'S';
+    USCI_clk_ref(UART_config.USCI_clk_ref_sel);    
+
+
+    //Reference frequence chosen for UART operation
+    UART_config.BRCLK_freq = 8000000; //Source clock frequency
+    /*Baudrate and BRCLK_freq combinations:
+
+    BRCLK_freq      32768     1000000   1048576   4000000   8000000   12000000  16000000
+    ------------------------------------------------------------------------------
+                    1200      
+                    2400      
+                    4800      
+                    9600       9600       9600      9600      9600      9600      9600
+                     	       19200      19200     19200     19200     19200     19200
+                               38400      38400     38400     38400     38400     38400
+                               57600      57600     57600     57600     57600     57600
+                               115200     115200    115200    115200    115200    115200
+                                                    230400    230400    230400    230400
+                                                              460800    460800    460800
+    */ 
+    UART_config.baudrate = 115200;
+    UART_baudrate_generation(UART_config.BRCLK_freq, UART_config.baudrate);
+    USCI_init();                     // **Initialize USCI state machine**
+
+
+    //parity enable:
+        //True --> parity ON
+        //False --> parity OFF            
+    //if parity enable:
+        //parity_type:
+            //E --> even (par)
+            //O --> odd (impar)
+    //num_data_bit: quantity of data bits available (character length)
+        //7 or 8
+    //num_stop_bit: stop bit select, one at least
+        //1 or 2
+    //first_byte_sent: To choose between MSB or LSB 
+        //M: MSB first
+        //L: LSB first
+    UART_config.parity_enable = false;
+    UART_config.parity_type = 'O';
+    UART_config.num_data_bit = 8;
+    UART_config.num_stop_bit = 1;
+    UART_config.first_Byte_sent = 'L';
+    character_format_sel(UART_config.parity_enable, UART_config.parity_type, UART_config.num_data_bit, UART_config.num_stop_bit, UART_config.first_Byte_sent);
+
+    //U --> Uart
+    //I --> IDLE-LINE MULTIPROCESSOR MODE
+    //D --> ADDRESS-BIT MULTIPROCESSOR MODE
+    //A --> UART MODE WITH AUTOMATIC BAUD RATE DETECTION
+    UART_config.USCI_mode = 'U';
+
+    USCI_mode_sel(UART_config.USCI_mode);
+
+
+
+}
+void main()
+{
+    // stop watch dog
+    stop_wd();
+    setup_CLK();
+    setup_UART();
+    setup_SD16A();
+    enable_interruptions(SD16A_configuration.interruption_SD16A);  
+    start_conversion(); // While it is started, working in continuous mode will sample the channel A until it is stopped
+    
+    
+
+}
+
+
+
+//***************************************************************************** 
+//Interrupción de la UART
+//***************************************************************************** 
+
+//TX interrupt handler
+
+#if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
+#pragma vector=USCIAB0TX_VECTOR
+__interrupt void USCI_A0_Tx (void)
+#elif defined(__GNUC__)
+void __attribute__ ((interrupt(USCIAB0TX_VECTOR))) USCI_A0_Tx (void)
+#else
+#error Compiler not supported!
+#endif
+{
+    if (state == 1) {
+        if (high_or_low) {
+            UCA0TXBUF = high_word; // Envía el byte alto
+        } else {
+            UCA0TXBUF = low_word;  // Envía el byte bajo
+            state = 0;  // Solo aquí finalizamos la transmisión completa
+            IE2 &= ~(UCA0RXIE|UCA0TXIE); // Disabling UART interrupt until SD16 enables it again
+
+        }
+        high_or_low = !high_or_low;  // Alterna entre alto y bajo
+
+    }
+
+}
+
+
+
+//***************************************************************************** 
+//Interrupción del SD16_A
+//***************************************************************************** 
+
+
+#if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
+#pragma vector=SD16A_VECTOR
+__interrupt void SD16ISR(void)
+#elif defined(__GNUC__)
+void __attribute__ ((interrupt(SD16A_VECTOR))) SD16ISR (void)
+#else
+#error Compiler not supported!
+#endif
+{
+  switch (SD16IV)
+  {
+  case 2:                                   // SD16MEM Overflow
+    break;
+  case 4:                                   // SD16MEM0 IFG
+    //USCI_interrupt_enable(true);
+    IE2 |= UCA0RXIE+UCA0TXIE;                 // Enabling UART interrupt
+
+    if (state == 0){
+        my_register = SD16MEM0;              // Save CH0 results (clears IFG)
+
+        high_word = (my_register >> 8) & 0xFFFF; // 8 bits superiores (0x1234)
+        low_word = my_register & 0xFFFF;          // 8 bits inferiores (0x5678)
+        state = 1;
+    }
+
+    break;
+  }
+}
+
