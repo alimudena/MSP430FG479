@@ -324,7 +324,7 @@ void enable_interruption_SD16A(bool enable){
         SD16CCTL0 |= SD16IE;            //Enable interrupt        
     }
 
-    SD16INCTL0 |= SD16INTDLY_0;         // Interrupt on 4th sample  
+    SD16INCTL0 |= SD16INTDLY_3;         // Interrupt on 4th sample  
 
 }
 

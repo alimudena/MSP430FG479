@@ -406,6 +406,8 @@ void UART_baudrate_generation(int32_t BRCLK_freq, int32_t baudrate){
                     }
         break;
         case (int)12000000:
+                    perror("Error: MSP430FG479 does not have this frequency.");
+
                     switch ((int)baudrate) {
                         case (int)9600:
                             UCA0BR0 = 226;                              
@@ -457,6 +459,7 @@ void UART_baudrate_generation(int32_t BRCLK_freq, int32_t baudrate){
 
 
         case (int)16000000:
+                    perror("Error: MSP430FG479 does not have this frequency.");
                     switch ((int)baudrate) {
                         case (int)9600:
                             UCA0BR0 = 130;                              

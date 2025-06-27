@@ -1,151 +1,196 @@
-/* --COPYRIGHT--,BSD_EX
- * Copyright (c) 2012, Texas Instruments Incorporated
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * *  Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * *  Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * *  Neither the name of Texas Instruments Incorporated nor the names of
- *    its contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
- * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *******************************************************************************
- * 
- *                       MSP430 CODE EXAMPLE DISCLAIMER
- *
- * MSP430 code examples are self-contained low-level programs that typically
- * demonstrate a single peripheral function or device feature in a highly
- * concise manner. For this the code may rely on the device's power-on default
- * register values and settings such as the clock configuration and care must
- * be taken when combining code from several examples to avoid potential side
- * effects. Also see www.ti.com/grace for a GUI- and www.ti.com/msp430ware
- * for an API functional library-approach to peripheral configuration.
- *
- * --/COPYRIGHT--*/
-//******************************************************************************
-//   MSP430x47x Demo - USCI_A0, SPI 3-Wire Master Incremented Data
-//
-//   Description: SPI master talks to SPI slave using 3-wire mode. Incrementing
-//   data is sent by the master starting at 0x01. Received data is expected to
-//   be same as the previous transmission.  USCI RX ISR is used to handle
-//   communication with the CPU, normally in LPM0. If high, P4.6 indicates
-//   valid data reception.  Because all execution after LPM0 is in ISRs,
-//   initialization waits for DCO to stabilize against ACLK.
-//   ACLK = 32.768kHz, MCLK = SMCLK = DCO ~ 1048kHz.  BRCLK = SMCLK/2
-//
-//   Use with SPI Slave Data Echo code example.  If slave is in debug mode, P5.2
-//   slave reset signal conflicts with slave's JTAG; to work around, use IAR's
-//   "Release JTAG on Go" on slave device.  If breakpoints are set in
-//   slave RX ISR, master must stopped also to avoid overrunning slave
-//   RXBUF.
-//
 //                   MSP430x47x
 //                 -----------------
 //             /|\|              XIN|-
 //              | |                 |  32kHz xtal
 //              --|RST          XOUT|-
 //                |                 |
-//                |             P2.4|-> Data Out (UCA0SIMO) -- 76
+//                |  ---  CLK  ---  |
+//                |             P1.1|--> MCLK = 8Mhz  --> 57 (referencia DCO)
+//                |             P1.4|--> SMCLK = 8MHz --> 54 (referencia DCO)
+//                |             P1.5|--> ACLK = 32kHz --> 51
 //                |                 |
-//          LED <-|P4.6         P2.5|<- Data In (UCA0SOMI) -- 75
+//                |  ---  SPI  ---  |
+//                |             P2.4|-> Data Out (UCA0SIMO) --> 76
+//          LED <-|P4.6         P2.5|<- Data In (UCA0SOMI) --> 75
+//                |             P3.0|-> Serial Clock Out (UCA0CLK) --> 41
 //                |                 |
-//                |             P3.0|-> Serial Clock Out (UCA0CLK) -- 41
+//                |  ---  SD16 ---  |
+//                |             P6.0|<- A0+ --> 67
+//                |             P6.1|<- A0- --> 66
+//                |                 |
+//                |                 |
 //
-//
-//  M.Seamen
-//  Texas Instruments Inc.
-//  September 2008
-//  Built with IAR Embedded Workbench V4.11A and CCE V3.2
-//******************************************************************************
+
 #include "msp430fg479.h"
 #include <msp430.h>
-#include "../functions/general_functions.h"
-#include "../functions/SD16_A.h"
-#include "../functions/FLL.h"
 #include "../functions/system_config.h"
+#include "../functions/general_functions.h"
+
+#include "../functions/FLL.h"
+#include "../functions/SD16_A.h"
 #include "../functions/USCI.h"
 
-unsigned char MST_Data,SLV_Data;
-int counter;
-int main(void)
-{
-  volatile unsigned int i;
 
-  stop_wd();
-  FLL_CTL0 |= XCAP14PF;                     // Configure load caps
+#include "clk_config.h"
+#include "UART_config.h"
+#include "SD16A_config.h"
+#include "IKKI_MAC.h"
 
-  // Wait for xtal to stabilize
-  do
-  {
-    IFG1 &= ~OFIFG;                           // Clear OSCFault flag
-    for (i = 0x47FF; i > 0; i--);             // Time for flag to set
-  }
-  while ((IFG1 & OFIFG));                   // OSCFault flag still set?
+int  state = 0;
 
-  for(i=2100;i>0;i--);                      // Now with stable ACLK, wait for
-                                            // DCO to stabilize.
-  P5OUT = 0x04;                             // P5 setup for slave reset
-  P5DIR |= 0x04;                            //
-  
-  toggle_setup();								//Setup P4.6 for LED output
+CLK_config_struct CLK_config;
+SD16A_config_struct SD16A_configuration;
+UART_config_struct UART_config;
+
+
+void general_setup(){
+
+    //***************************************************************************** 
+    /*GENERAL SETUP*/
+    //*****************************************************************************
+
+    stop_wd();
+    CLK_config.CLK_debug = false;
+    if (CLK_config.CLK_debug)
+    {
+        configure_PINS_for_clk_debug();
+        //setup pin for led for toggle
+        toggle_setup();
+    }
+}
+
+
+void setup_CLK(){
+    //***************************************************************************** 
+    /*SETUP CLK*/
+    /*For generating the 8MHz:
+        CLK_config.operating_mode = 'A';
+        CLK_config.LFXT1_wk_mode = 'L';
+        CLK_config.DCO_range = 4;  
+        CLK_config.DCOPLUS_on = true; //If D factor is wanted to be applied then -> True
+        CLK_config.D_val = 2; //Max 8
+        CLK_config.N_MCLK = 121; //Max 127
+        CLK_config.ref_MCLK = 'D'; //  D: DCO, X: XT2, A: LFXT1
+        CLK_config.ref_SMCLK = 'D'; // D: DCO, X: XT2, N: OFF
+        CLK_config.divider_ACLK = 1; // 1, 2, 4, 8
+        CLK_config.LFXT2_osc_on = false;
+    */
+    //*****************************************************************************
+
+    //Modo de operación
+    /*    mode:
+            - A: Active
+            - L: Low Power
+                - 0: LPM0
+                - 1: LPM1
+                - 2: LPM2 
+                - 3: LPM3
+    */
+        CLK_config.operating_mode = 'A';
+        select_operating_mode(CLK_config.operating_mode, 0);
+    //Oscilador LFXT1
+    /*
+        L: Low Frequency Mode --> f auxiliar de 323kHz conectado
+        H: High Frequency Mode
+    */
+        CLK_config.LFXT1_wk_mode = 'L';
+    //Configura la capacidad interna del LFXT1
+    /*0  --> XIN Cap = XOUT Cap = 0pf */
+    /*10 --> XIN Cap = XOUT Cap = 10pf */
+    /*14 --> XIN Cap = XOUT Cap = 14pf */
+    /*18 --> XIN Cap = XOUT Cap = 18pf */
+        CLK_config.LFXT1_int_cap = 18;
+        LFXT1_working_mode(CLK_config.LFXT1_wk_mode);
+        LFXT1_internal_cap_config(CLK_config.LFXT1_int_cap);
+    //DCO
+    //Rango de frecuencia de trabajo del DCO:
+        /*2 --> fDCOCLK =   1.4-12MHz*/
+        /*3 --> fDCOCLK =   2.2-17Mhz*/
+        /*4 --> fDCOCLK =   3.2-25Mhz*/ //-> 8 MHz
+        /*8 --> fDCOCLK =     5-40Mhz*/
+        CLK_config.DCO_range = 4;  
+        DCO_f_range(CLK_config.DCO_range);
+    // Values for setting the frequency of the DCO+
+    // DCO+ set so freq= xtal x D x N_MCLK+1 
+    //XTAL --> 32767Hz
+        CLK_config.DCOPLUS_on = true; //If D factor is wanted to be applied then -> True
+        CLK_config.D_val = 2; //Max 8
+        CLK_config.N_MCLK = 121; //Max 127
+        configuring_DCO(CLK_config.DCOPLUS_on, CLK_config.D_val);
+        configure_N_for_MCLK(CLK_config.N_MCLK);
+    //MCLK
+    //Reference selection for MCLK
+        CLK_config.ref_MCLK = 'D'; //  D: DCO, X: XT2, A: LFXT1
+        select_reference_MCLK(CLK_config.ref_MCLK);
+    //SMCLK
+    // Reference for SMCLK
+        CLK_config.ref_SMCLK = 'D'; // D: DCO, X: XT2, N: OFF
+        select_reference_SMCLK(CLK_config.ref_SMCLK);
+    //ACLK
+    //ACLK division for configuring ACLK/N
+        CLK_config.divider_ACLK = 1; // 1, 2, 4, 8
+        configure_ACLK_N(CLK_config.divider_ACLK);
+    // LFXT2
+    //Second oscillator ON OFF
+        CLK_config.LFXT2_osc_on = false;
+        LFXT2_disable(CLK_config.LFXT2_osc_on);
+
+}
+
+
+int main(void){
+
+    general_setup();
+    setup_CLK();
+
+    init_MSP();
+
+
+
+//************************** SPI configuration *****************************
+
 
   USCI_SPI_pin_setup();
-
-  UCA0CTL0 |= UCSYNC+UCCKPL;    //3-pin, 8-bit SPI master
   
-  static const int SPI_length = 8;
-  static const char first_Byte_sent = 'L';
-  SPI_char_format(SPI_length, first_Byte_sent); //8-bit and MSB SPI 
-
   static const char Master_Slave = 'M';
   SPI_mode_config(Master_Slave);
 
+  static const char inactive_state = 'H'; // clock polarity inactive high
+  static const char data_on_clock_edge = 'A'; //data cAptured on the first UCLK edge and changed on the following edge
+  SPI_clk_polarity_phase(inactive_state, data_on_clock_edge);
 
-  UCA0CTL1 |= UCSSEL_2;                     // SMCLK
-  UCA0BR0 = 0x0F;                           // /2
-  UCA0BR1 = 0;                              //
-  UCA0MCTL = 0;                             // No modulation
+  static const int SPI_length = 8;
+  static const char first_Byte_sent = 'M';
+  SPI_char_format(SPI_length, first_Byte_sent); //8-bit and MSB SPI 
 
-  
-  USCI_init();                     // **Initialize USCI state machine**
-  
-  static const bool enable_USCI_interr_rx = true; 
-  static const bool enable_USCI_interr_tx = false; 
+/*clk_ref:
+    U --> UCLK
+    A --> ACLK
+    S --> SMCLK        
+*/
+  static const char clk_ref_SPI = 'S';
+  USCI_clk_ref(clk_ref_SPI);                    //CLK reference
+
+  static const int clk_div = 2;
+  SPI_clk_division(clk_div);
+
+  static const bool enable_USCI_interr_rx = false; 
+  static const bool enable_USCI_interr_tx = true; 
   USCI_interrupt_enable(enable_USCI_interr_rx, enable_USCI_interr_tx); // Enable USCI_A0 RX interrupt
-  
-  P5OUT &= ~0x04;                           // Now with SPI signals initialized,
-  P5OUT |= 0x04;                            // reset slave
 
-  for(i=5000;i>0;i--);                      // Wait for slave to initialize
+  USCI_init();                     // **Initialize USCI state machine**
 
-  MST_Data = 0x001;                         // Initialize data values
-  SLV_Data = 0x000;                         //
 
-  
-  UCA0TXBUF = MST_Data;                     // Transmit first character
+  enable_interruptions(true);
 
- __bis_SR_register(LPM0_bits + GIE);       // CPU off, enable interrupts
+
+
 }
+
+//***************************************************************************** 
+//Interrupción del SPI
+//***************************************************************************** 
+
 
 #if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
 #pragma vector=USCIAB0RX_VECTOR
@@ -156,20 +201,10 @@ void __attribute__ ((interrupt(USCIAB0RX_VECTOR))) USCIA0RX_ISR (void)
 #error Compiler not supported!
 #endif
 {
-  volatile unsigned int i;
-
   while (!(IFG2 & UCA0TXIFG));              // USART1 TX buffer ready?
-  /*
-  if (UCA0RXBUF==SLV_Data)                  // Test for correct character RX'd
-    P4OUT |= 0x40;                          // If correct, light LED
-  else
-    P4OUT &= ~0x40;                         // If incorrect, clear LED
-  */
-  
-  MST_Data++;                               // Increment data
-//  SLV_Data++;
-  UCA0TXBUF = MST_Data;                     // Send next value
-//  UCA0TXBUF = 0x45;                     // Send next value
+  UCA0TXBUF = state;
+  state++;
 
-  for(i=30;i>0;i--);                        // Add time between transmissions to
 }   
+
+
