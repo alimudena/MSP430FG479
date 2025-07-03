@@ -1,3 +1,5 @@
+#include <stdbool.h> 
+
 #ifndef SD16A_CONFIG_H
 #define SD16A_CONFIG_H
 typedef struct{

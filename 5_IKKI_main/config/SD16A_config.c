@@ -1,4 +1,9 @@
 #include "SD16A_config.h"
+#include "../IKKI/IKKI_MAC.h"
+#include "../functions/SD16_A.h"
+
+int i;
+unsigned counter;
 
 void setup_SD16A(SD16A_config_struct SD16A_configuration) {
 

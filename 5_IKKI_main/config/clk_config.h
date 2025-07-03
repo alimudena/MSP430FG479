@@ -1,3 +1,5 @@
+#include <stdbool.h> 
+
 #ifndef CLK_CONFIG_H
 #define CLK_CONFIG_H
 typedef struct{

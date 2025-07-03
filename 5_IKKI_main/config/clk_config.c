@@ -1,5 +1,8 @@
 #include "clk_config.h"
-
+#include "../functions/general_functions.h"
+#include "../functions/SD16_A.h"
+#include "../functions/system_config.h"
+#include "../functions/FLL.h"
 
 void general_setup(CLK_config_struct CLK_config) {
 

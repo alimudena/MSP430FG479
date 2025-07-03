@@ -1,3 +1,5 @@
+#include <stdbool.h> 
+
 #ifndef SPI_CONFIG_H
 #define SPI_CONFIG_H
 typedef struct{

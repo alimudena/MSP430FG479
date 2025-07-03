@@ -54,13 +54,16 @@
 
 
 
+
 int state = 1;
 uint8_t high_word = 0x00;
 uint8_t low_word = 0xFF;
 bool high_or_low = true;
 int counter;
 int i;
-bool uart_usage = false; //True: UART, False: SPI
+uint16_t my_register = 0;
+
+#define UART_USAGE  false //True: UART, False: SPI
 
 UART_config_struct UART_config;
 SPI_config_struct SPI_config;
@@ -357,7 +360,7 @@ int main(void) {
   //************************** LED configuration *****************************
   toggle_setup(); // Setup P4.6 for LED output
 
-if (uart_usage){
+if (UART_USAGE){
 
   //************************** UART configuration *****************************
   setup_UART();
@@ -398,7 +401,7 @@ State changes:
 */
 
 
-if (uart_usage){
+#if (UART_USAGE == true)
 
     //***************************************************************************** 
     //Interrupción de la UART
@@ -440,7 +443,7 @@ if (uart_usage){
 
     }
 
-}else{
+#else
 
     //*****************************************************************************
     // Interrupción del SPI
@@ -479,7 +482,7 @@ if (uart_usage){
 
     }
 
-}
+#endif
 
 //*****************************************************************************
 // Interrupción del SD16_A

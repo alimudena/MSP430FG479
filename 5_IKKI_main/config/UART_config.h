@@ -1,3 +1,6 @@
+#include <stdbool.h> 
+#include <stdint.h>
+
 #ifndef UART_CONFIG_H
 #define UART_CONFIG_H
 

@@ -108,10 +108,12 @@ void main()
     initClockTo8MHz();
     initGPIO();
     initUART();
-    int i = 0;
+    int i = 5;
+    int j = 0;
     while(1){
          SendUCA0Data(i);
         i++;
+      for(j = 0; j<8000; j++);
     }
 
 }

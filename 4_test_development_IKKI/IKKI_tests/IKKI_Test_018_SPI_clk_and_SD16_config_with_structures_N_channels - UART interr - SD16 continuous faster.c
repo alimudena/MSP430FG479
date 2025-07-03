@@ -239,7 +239,7 @@ void setup_SD16A() {
   // -- Método de conversión
   SD16A_configuration.conv_mode = 'C'; // C: Continuous  S: Single
                                        // -- Tipo de datos
-  SD16A_configuration.polarity = 'B';  // B : Bipolar, U : unipolar
+  SD16A_configuration.polarity = 'U';  // B : Bipolar, U : unipolar
   SD16A_configuration.sign = 'O';      // O : Offset, C : 2's complement
 
   SD16A_configuration.sampled = false;

@@ -32,9 +32,10 @@ int main(void){
 
     //setup pin for led for toggle
     toggle_setup();
-
+    int i;
     while(1){
         toggle_pin();
+        for(i = 0; i < 16000; i++);
     };
 }
 

@@ -41,10 +41,7 @@
 
 #include "../functions/system_config.h"
 #include "../functions/general_functions.h"
-#include "../functions/FLL.h"
 #include "../functions/SD16_A.h"
-#include "../functions/USCI.h"
-#include "../functions/general_functions.h"
 
 #include "IKKI_MAC.h"
 
@@ -59,9 +56,8 @@ int state = 1;
 uint8_t high_word = 0x00;
 uint8_t low_word = 0xFF;
 bool high_or_low = true;
-int counter;
-int i;
-bool uart_usage = false; //True: UART, False: SPI
+uint16_t my_register = 0;
+#define UART_USAGE  false //True: UART, False: SPI
 
 CLK_config_struct CLK_config;
 SD16A_config_struct SD16A_configuration;
@@ -81,17 +77,18 @@ int main(void) {
   //************************** LED configuration *****************************
   toggle_setup(); // Setup P4.6 for LED output
 
-if (uart_usage){
+#if (UART_USAGE)
 
   //************************** UART configuration *****************************
   setup_UART(UART_config);
 
-}else{
+
+#else
 
   //************************** SPI configuration *****************************
   SPI_configuration(SPI_config);
 
-}
+#endif
 
   //************************** SD16 configuration *****************************
   setup_SD16A(SD16A_configuration);
@@ -122,7 +119,7 @@ State changes:
 */
 
 
-if (uart_usage){
+#if (UART_USAGE == true)
 
     //***************************************************************************** 
     //Interrupción de la UART
@@ -142,21 +139,21 @@ if (uart_usage){
         if (state == 1){
             UCA0TXBUF = SD16A_configuration.analog_input_ID[SD16A_configuration.analog_input_being_sampled];
             state = 2;
-            SD16CCTL0 |= SD16IE;         // Enabling SD16 interrupt    
-            IE2 &= ~(UCA0RXIE|UCA0TXIE); // Disabling UART interrupt
+            SD16CCTL0 |= SD16IE;          // Enabling SD16 interrupt    
+            IE2 &= ~(UCA0RXIE|UCA0TXIE);  // Disabling UART interrupt
 
         }
         if (state == 3) {
             if (high_or_low) {
-                UCA0TXBUF = high_word; // Envía el byte alto
+                UCA0TXBUF = high_word;    // Envía el byte alto
             } else {
-                UCA0TXBUF = low_word;  // Envía el byte bajo
-                state = 1;  // Solo aquí finalizamos la transmisión completa de los bytes
-                SD16CCTL0 &= ~(SD16IE);                   // Disabling SD16 interrupt
-                IE2 |= UCA0RXIE+UCA0TXIE;                 // Enabling UART interrupt
+                UCA0TXBUF = low_word;     // Envía el byte bajo
+                state = 1;                // Solo aquí finalizamos la transmisión completa de los bytes
+                SD16CCTL0 &= ~(SD16IE);   // Disabling SD16 interrupt
+                IE2 |= UCA0RXIE+UCA0TXIE; // Enabling UART interrupt
 
             }
-            high_or_low = !high_or_low;  // Alterna entre alto y bajo
+            high_or_low = !high_or_low;   // Alterna entre alto y bajo
 
         }else{
             
@@ -164,7 +161,7 @@ if (uart_usage){
 
     }
 
-}else{
+#else
 
     //*****************************************************************************
     // Interrupción del SPI
@@ -184,7 +181,7 @@ if (uart_usage){
         UCA0TXBUF = SD16A_configuration.analog_input_ID[SD16A_configuration.analog_input_being_sampled];
         state = 2;
         SD16CCTL0 |= SD16IE;         // Enabling SD16 interrupt
-        IE2 &= ~(UCA0RXIE); // Disabling UART interrupt
+        IE2 &= ~(UCA0RXIE);          // Disabling SPI interrupt
       }
       if (state == 3) {
         if (high_or_low) {
@@ -192,18 +189,17 @@ if (uart_usage){
           high_or_low = !high_or_low; // Alterna entre alto y bajo
 
         } else {
-          UCA0TXBUF = low_word; // Envía el byte bajo
-          state = 1; // Solo aquí finalizamos la transmisión completa de los bytes
-          SD16CCTL0 &= ~(SD16IE);                   // Disabling SD16
-          // interrupt
-          IE2 |= UCA0RXIE;            // Enabling UART interrupt
+          UCA0TXBUF = low_word;       // Envía el byte bajo
+          state = 1;                  // Solo aquí finalizamos la transmisión completa de los bytes
+          SD16CCTL0 &= ~(SD16IE);     // Disabling SD16 interrupt
+          IE2 |= UCA0RXIE;            // Enabling SPI interrupt
           high_or_low = !high_or_low; // Alterna entre alto y bajo
         }
       }
 
     }
 
-}
+#endif
 
 //*****************************************************************************
 // Interrupción del SD16_A
@@ -237,12 +233,11 @@ void __attribute__((interrupt(SD16A_VECTOR))) SD16ISR(void)
       high_word = (my_register >> 8) & 0xFFFF; // 8 bits superiores (0x1234)
       low_word = my_register & 0xFFFF;         // 8 bits inferiores (0x5678)
       state = 3;
-      IE2 |= UCA0RXIE; // Enabling UART interrupt
-      SD16CCTL0 &= ~(SD16IE);                   // Disabling SD16
-      //        interrupt
+      IE2 |= UCA0RXIE;                         // Enabling UART interrupt
+      SD16CCTL0 &= ~(SD16IE);                  // Disabling SD16 interrupt
     } else {
-      IE2 |= UCA0RXIE; // Enabling UART interrupt
-      SD16CCTL0 &= ~(SD16IE);                   // Disabling SD16 interrupt
+      IE2 |= UCA0RXIE;                         // Enabling UART interrupt
+      SD16CCTL0 &= ~(SD16IE);                  // Disabling SD16 interrupt
     }
 
     break;

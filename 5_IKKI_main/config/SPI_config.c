@@ -1,5 +1,6 @@
 #include "SPI_config.h"
-
+#include "../functions/USCI.h"
+#include "../IKKI/IKKI_MAC.h"
 
 void SPI_configuration(SPI_config_struct SPI_config) {
 

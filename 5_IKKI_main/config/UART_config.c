@@ -1,4 +1,6 @@
 #include "UART_config.h"
+#include "../functions/USCI.h"
+#include "../functions/system_config.h"
 
 void setup_UART(UART_config_struct UART_config){
     //******************************************************************************

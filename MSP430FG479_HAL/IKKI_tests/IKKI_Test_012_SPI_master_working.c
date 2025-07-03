@@ -21,171 +21,263 @@
 //                |                 |
 //
 
+#include "../functions/general_functions.h"
+#include "../functions/system_config.h"
 #include "msp430fg479.h"
 #include <msp430.h>
-#include "../functions/system_config.h"
-#include "../functions/general_functions.h"
 
 #include "../functions/FLL.h"
 #include "../functions/SD16_A.h"
 #include "../functions/USCI.h"
+#include "../functions/general_functions.h"
+#include "../functions/system_config.h"
 
-
-#include "clk_config.h"
-#include "UART_config.h"
-#include "SD16A_config.h"
 #include "IKKI_MAC.h"
+#include "SD16A_config.h"
+#include "SPI_config.h"
+#include "UART_config.h"
+#include "clk_config.h"
 
-int  state = 0;
+int state = 1;
+uint8_t high_word = 0x00;
+uint8_t low_word = 0xFF;
+volatile uint16_t my_register = 0xabcd;
+bool high_or_low = true;
+#define SD16_ENABLE true
+#define CLK_DEBUG true
+int counter;
+int i;
 
+UART_config_struct UART_config;
+SPI_config_struct SPI_config;
 CLK_config_struct CLK_config;
 SD16A_config_struct SD16A_configuration;
-UART_config_struct UART_config;
 
+void general_setup() {
 
-void general_setup(){
+  //*****************************************************************************
+  /*GENERAL SETUP*/
+  //*****************************************************************************
 
-    //***************************************************************************** 
-    /*GENERAL SETUP*/
-    //*****************************************************************************
-
-    stop_wd();
-    CLK_config.CLK_debug = false;
-    if (CLK_config.CLK_debug)
-    {
-        configure_PINS_for_clk_debug();
-        //setup pin for led for toggle
-        toggle_setup();
-    }
+  stop_wd();
+  CLK_config.CLK_debug = false;
+  if (CLK_config.CLK_debug) {
+    configure_PINS_for_clk_debug();
+    // setup pin for led for toggle
+    toggle_setup();
+  }
 }
 
+void setup_CLK() {
+  //*****************************************************************************
+  /*SETUP CLK*/
+  /*For generating the 8MHz:
+      CLK_config.operating_mode = 'A';
+      CLK_config.LFXT1_wk_mode = 'L';
+      CLK_config.DCO_range = 4;
+      CLK_config.DCOPLUS_on = true; //If D factor is wanted to be applied then
+     -> True CLK_config.D_val = 2; //Max 8 CLK_config.N_MCLK = 121; //Max 127
+      CLK_config.ref_MCLK = 'D'; //  D: DCO, X: XT2, A: LFXT1
+      CLK_config.ref_SMCLK = 'D'; // D: DCO, X: XT2, N: OFF
+      CLK_config.divider_ACLK = 1; // 1, 2, 4, 8
+      CLK_config.LFXT2_osc_on = false;
+  */
+  //*****************************************************************************
 
-void setup_CLK(){
-    //***************************************************************************** 
-    /*SETUP CLK*/
-    /*For generating the 8MHz:
-        CLK_config.operating_mode = 'A';
-        CLK_config.LFXT1_wk_mode = 'L';
-        CLK_config.DCO_range = 4;  
-        CLK_config.DCOPLUS_on = true; //If D factor is wanted to be applied then -> True
-        CLK_config.D_val = 2; //Max 8
-        CLK_config.N_MCLK = 121; //Max 127
-        CLK_config.ref_MCLK = 'D'; //  D: DCO, X: XT2, A: LFXT1
-        CLK_config.ref_SMCLK = 'D'; // D: DCO, X: XT2, N: OFF
-        CLK_config.divider_ACLK = 1; // 1, 2, 4, 8
-        CLK_config.LFXT2_osc_on = false;
-    */
-    //*****************************************************************************
-
-    //Modo de operación
-    /*    mode:
-            - A: Active
-            - L: Low Power
-                - 0: LPM0
-                - 1: LPM1
-                - 2: LPM2 
-                - 3: LPM3
-    */
-        CLK_config.operating_mode = 'A';
-        select_operating_mode(CLK_config.operating_mode, 0);
-    //Oscilador LFXT1
-    /*
-        L: Low Frequency Mode --> f auxiliar de 323kHz conectado
-        H: High Frequency Mode
-    */
-        CLK_config.LFXT1_wk_mode = 'L';
-    //Configura la capacidad interna del LFXT1
-    /*0  --> XIN Cap = XOUT Cap = 0pf */
-    /*10 --> XIN Cap = XOUT Cap = 10pf */
-    /*14 --> XIN Cap = XOUT Cap = 14pf */
-    /*18 --> XIN Cap = XOUT Cap = 18pf */
-        CLK_config.LFXT1_int_cap = 18;
-        LFXT1_working_mode(CLK_config.LFXT1_wk_mode);
-        LFXT1_internal_cap_config(CLK_config.LFXT1_int_cap);
-    //DCO
-    //Rango de frecuencia de trabajo del DCO:
-        /*2 --> fDCOCLK =   1.4-12MHz*/
-        /*3 --> fDCOCLK =   2.2-17Mhz*/
-        /*4 --> fDCOCLK =   3.2-25Mhz*/ //-> 8 MHz
-        /*8 --> fDCOCLK =     5-40Mhz*/
-        CLK_config.DCO_range = 4;  
-        DCO_f_range(CLK_config.DCO_range);
-    // Values for setting the frequency of the DCO+
-    // DCO+ set so freq= xtal x D x N_MCLK+1 
-    //XTAL --> 32767Hz
-        CLK_config.DCOPLUS_on = true; //If D factor is wanted to be applied then -> True
-        CLK_config.D_val = 2; //Max 8
-        CLK_config.N_MCLK = 121; //Max 127
-        configuring_DCO(CLK_config.DCOPLUS_on, CLK_config.D_val);
-        configure_N_for_MCLK(CLK_config.N_MCLK);
-    //MCLK
-    //Reference selection for MCLK
-        CLK_config.ref_MCLK = 'D'; //  D: DCO, X: XT2, A: LFXT1
-        select_reference_MCLK(CLK_config.ref_MCLK);
-    //SMCLK
-    // Reference for SMCLK
-        CLK_config.ref_SMCLK = 'D'; // D: DCO, X: XT2, N: OFF
-        select_reference_SMCLK(CLK_config.ref_SMCLK);
-    //ACLK
-    //ACLK division for configuring ACLK/N
-        CLK_config.divider_ACLK = 1; // 1, 2, 4, 8
-        configure_ACLK_N(CLK_config.divider_ACLK);
-    // LFXT2
-    //Second oscillator ON OFF
-        CLK_config.LFXT2_osc_on = false;
-        LFXT2_disable(CLK_config.LFXT2_osc_on);
-
+  // Modo de operación
+  /*    mode:
+          - A: Active
+          - L: Low Power
+              - 0: LPM0
+              - 1: LPM1
+              - 2: LPM2
+              - 3: LPM3
+  */
+  CLK_config.operating_mode = 'A';
+  select_operating_mode(CLK_config.operating_mode, 0);
+  // Oscilador LFXT1
+  /*
+      L: Low Frequency Mode --> f auxiliar de 323kHz conectado
+      H: High Frequency Mode
+  */
+  CLK_config.LFXT1_wk_mode = 'L';
+  // Configura la capacidad interna del LFXT1
+  /*0  --> XIN Cap = XOUT Cap = 0pf */
+  /*10 --> XIN Cap = XOUT Cap = 10pf */
+  /*14 --> XIN Cap = XOUT Cap = 14pf */
+  /*18 --> XIN Cap = XOUT Cap = 18pf */
+  CLK_config.LFXT1_int_cap = 18;
+  LFXT1_working_mode(CLK_config.LFXT1_wk_mode);
+  LFXT1_internal_cap_config(CLK_config.LFXT1_int_cap);
+  // DCO
+  // Rango de frecuencia de trabajo del DCO:
+  /*2 --> fDCOCLK =   1.4-12MHz*/
+  /*3 --> fDCOCLK =   2.2-17Mhz*/
+  /*4 --> fDCOCLK =   3.2-25Mhz*/ //-> 8 MHz
+  /*8 --> fDCOCLK =     5-40Mhz*/
+  CLK_config.DCO_range = 4;
+  DCO_f_range(CLK_config.DCO_range);
+  // Values for setting the frequency of the DCO+
+  // DCO+ set so freq= xtal x D x N_MCLK+1
+  // XTAL --> 32767Hz
+  CLK_config.DCOPLUS_on =
+      true;                // If D factor is wanted to be applied then -> True
+  CLK_config.D_val = 2;    // Max 8
+  CLK_config.N_MCLK = 121; // Max 127
+  configuring_DCO(CLK_config.DCOPLUS_on, CLK_config.D_val);
+  configure_N_for_MCLK(CLK_config.N_MCLK);
+  // MCLK
+  // Reference selection for MCLK
+  CLK_config.ref_MCLK = 'D'; //  D: DCO, X: XT2, A: LFXT1
+  select_reference_MCLK(CLK_config.ref_MCLK);
+  // SMCLK
+  //  Reference for SMCLK
+  CLK_config.ref_SMCLK = 'D'; // D: DCO, X: XT2, N: OFF
+  select_reference_SMCLK(CLK_config.ref_SMCLK);
+  // ACLK
+  // ACLK division for configuring ACLK/N
+  CLK_config.divider_ACLK = 1; // 1, 2, 4, 8
+  configure_ACLK_N(CLK_config.divider_ACLK);
+  // LFXT2
+  // Second oscillator ON OFF
+  CLK_config.LFXT2_osc_on = false;
+  LFXT2_disable(CLK_config.LFXT2_osc_on);
 }
 
-
-int main(void){
-
-    general_setup();
-    setup_CLK();
-
-    init_MSP();
-
-
-
-//************************** SPI configuration *****************************
-
+void SPI_configuration() {
 
   USCI_SPI_pin_setup();
-  
-  static const char Master_Slave = 'M';
-  SPI_mode_config(Master_Slave);
 
-  static const char inactive_state = 'H'; // clock polarity inactive high
-  static const char data_on_clock_edge = 'A'; //data cAptured on the first UCLK edge and changed on the following edge
-  SPI_clk_polarity_phase(inactive_state, data_on_clock_edge);
+  SPI_config.Master_Slave = 'M';
+  SPI_mode_config(SPI_config.Master_Slave);
 
-  static const int SPI_length = 8;
-  static const char first_Byte_sent = 'M';
-  SPI_char_format(SPI_length, first_Byte_sent); //8-bit and MSB SPI 
+  SPI_config.inactive_state = 'H';     // clock polarity inactive high
+  SPI_config.data_on_clock_edge = 'A'; // data cAptured on the first UCLK edge
+                                       // and changed on the following edge
+  SPI_clk_polarity_phase(SPI_config.inactive_state,
+                         SPI_config.data_on_clock_edge);
 
-/*clk_ref:
-    U --> UCLK
-    A --> ACLK
-    S --> SMCLK        
-*/
-  static const char clk_ref_SPI = 'S';
-  USCI_clk_ref(clk_ref_SPI);                    //CLK reference
+  SPI_config.SPI_length = 8;
+  SPI_config.first_Byte_sent = 'M';
+  SPI_char_format(SPI_config.SPI_length,
+                  SPI_config.first_Byte_sent); // 8-bit and MSB SPI
 
-  static const int clk_div = 2;
-  SPI_clk_division(clk_div);
+  /*clk_ref:
+      U --> UCLK
+      A --> ACLK
+      S --> SMCLK
+  */
+  SPI_config.clk_ref_SPI = 'S';
+  USCI_clk_ref(SPI_config.clk_ref_SPI); // CLK reference
 
-  static const bool enable_USCI_interr_rx = false; 
-  static const bool enable_USCI_interr_tx = true; 
-  USCI_interrupt_enable(enable_USCI_interr_rx, enable_USCI_interr_tx); // Enable USCI_A0 RX interrupt
+  SPI_config.clk_div = 2;
+  SPI_clk_division(SPI_config.clk_div);
 
-  USCI_init();                     // **Initialize USCI state machine**
+  USCI_init(); // **Initialize USCI state machine**
 
-
-  enable_interruptions(true);
-
-
-
+  SPI_config.enable_USCI_interr_rx = false;
+  SPI_config.enable_USCI_interr_tx = false;
+  USCI_interrupt_enable(
+      SPI_config.enable_USCI_interr_rx,
+      SPI_config.enable_USCI_interr_tx); // Enable USCI_A0 RX interrupt
 }
+
+void setup_SD16A() {
+
+  // -- Entrada analógica
+  SD16A_configuration.analog_input_count = 5;
+  SD16A_configuration.analog_input_being_sampled = 0;
+
+  SD16A_configuration.analog_input[0] = EEG1; // 3: A3 - EEG1
+  SD16A_configuration.analog_input[1] = EEG2; // 2: A2 - EEG2
+  SD16A_configuration.analog_input[2] = EEG3; // 1: A1 - EEG3
+  SD16A_configuration.analog_input[3] = ECG;  // 0: A0 - ECG
+  SD16A_configuration.analog_input[4] = BATT; // 4: A4 - BATT
+
+  SD16A_configuration.analog_input_ID[0] = 0x30; // 3: A3 - EEG1
+  SD16A_configuration.analog_input_ID[1] = 0x31; // 2: A2 - EEG2
+  SD16A_configuration.analog_input_ID[2] = 0x32; // 1: A1 - EEG3
+  SD16A_configuration.analog_input_ID[3] = 0x33; // 0: A0 - ECG
+  SD16A_configuration.analog_input_ID[4] = 0x34; // 4: A4 - BATT
+
+  // -- Tensión de referencia
+  SD16A_configuration.v_ref =
+      'I'; // I: Internal (1.2V), O: Off-chip, E: External
+           // -- Reloj de referencia
+  SD16A_configuration.clk_ref = 'M'; // M: MCLK, S: SMCLK, A: AC1LK, T: TACLK
+                                     // -- Divisor de frecuencia de referencia
+  SD16A_configuration.clk_div_1 = 1;
+  SD16A_configuration.clk_div_2 = 1;
+  // -- Método de lectura: Polling o Interrupciones
+  SD16A_configuration.interruption_SD16A = true;
+  // -- Over Sampling Ratio
+  SD16A_configuration.OSR = 512; // 1, 32, 64, 128, 256, 512, 1024
+  // -- Ganancia
+  SD16A_configuration.gain = 1; // 1, 2, 4, 8, 16 or 32
+  // -- Método de conversión
+  SD16A_configuration.conv_mode = 'C'; // C: Continuous  S: Single
+                                       // -- Tipo de datos
+  SD16A_configuration.polarity = 'B';  // B : Bipolar, U : unipolar
+  SD16A_configuration.sign = 'O';      // O : Offset, C : 2's complement
+
+  SD16A_configuration.sampled = false;
+
+  for (counter = SD16A_configuration.analog_input_count; counter > 0;
+       counter--) {
+    setup_analog_input(SD16A_configuration.analog_input[counter - 1]);
+  }
+  select_analog_input(
+      SD16A_configuration
+          .analog_input[SD16A_configuration.analog_input_being_sampled]);
+  FLL_CTL0 |= XCAP14PF; // Configure load caps
+  for (i = 10000; i > 0; i--)
+    ; // Delay for 32 kHz crystal to
+
+  voltage_reference(SD16A_configuration.v_ref);
+  SD16_clk_reference(
+      SD16A_configuration.clk_ref); // M: MCLK, S: SMCLK, A: ACLK, T:TACLK
+  fM_dividers(SD16A_configuration.clk_div_1, SD16A_configuration.clk_div_2);
+  for (i = 10000; i > 0; i--)
+    ; // Delay for 1.2V ref startup
+  config_OSR(SD16A_configuration.OSR);
+  gain_setup(SD16A_configuration.gain);
+  conversion_mode(SD16A_configuration.conv_mode);
+  data_format(SD16A_configuration.polarity, SD16A_configuration.sign);
+}
+int main(void) {
+
+  general_setup();
+  init_MSP();
+
+  //************************** CLK configuration *****************************
+  setup_CLK();
+
+  //************************** LED configuration *****************************
+  toggle_setup(); // Setup P4.6 for LED output
+
+  //************************** SPI configuration *****************************
+  SPI_configuration();
+
+  UCA0TXBUF = 0x45; // Transmit first character
+    IE2 |= UCA0RXIE; // Enabling UART interrupt
+  enable_interruptions(true);
+}
+
+/*
+State machine:
+1. Send Channel ID being sampled
+2. Sample
+3. Send sample (x2)
+
+State changes:
+1 - 2 : interruption SD16 ON
+        interruption UART OFF
+2 - 3 : interruption SD16 OFF
+        interruption UART ON
+3 - 1 : interruption SD16 OFF
+        interruption UART ON
+
+*/
 
 //***************************************************************************** 
 //Interrupción del SPI
@@ -193,10 +285,10 @@ int main(void){
 
 
 #if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
-#pragma vector=USCIAB0RX_VECTOR
-__interrupt void USCIA0RX_ISR (void)
+#pragma vector = USCIAB0RX_VECTOR
+__interrupt void USCIA0RX_ISR(void)
 #elif defined(__GNUC__)
-void __attribute__ ((interrupt(USCIAB0RX_VECTOR))) USCIA0RX_ISR (void)
+void __attribute__((interrupt(USCIAB0RX_VECTOR))) USCIA0RX_ISR(void)
 #else
 #error Compiler not supported!
 #endif
@@ -205,6 +297,4 @@ void __attribute__ ((interrupt(USCIAB0RX_VECTOR))) USCIA0RX_ISR (void)
   UCA0TXBUF = state;
   state++;
 
-}   
-
-
+} 
