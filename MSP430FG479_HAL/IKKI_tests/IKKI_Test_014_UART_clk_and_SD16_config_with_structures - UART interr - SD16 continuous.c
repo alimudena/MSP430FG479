@@ -1,38 +1,39 @@
-
-//                   MSP430FG479
-//                 -----------------
-//            /|\ |              XIN|---+
-//             |  |                 |   |
-//             ---|RST              |   32kHz
-//                |                 |   |
-//                |             XOUT|---+
-//                |             P1.1|--> MCLK = 8Mhz  --> 57 (referencia DCO)
-//                |             P1.4|--> SMCLK = 8MHz --> 54 (referencia DCO)
-//                |             P1.5|--> ACLK = 32kHz --> 51
-//                |                 |
-//                |             P2.5|<------- Receive Data (UCA0RXD) --> 75
-//                |             P2.4|-------> Transmit Data (UCA0TXD) --> 76
-//                |                 |
-
-//                |             P1.5|<------- A3+: EEG1 positive input --> 51 azul oscuro 
-//                |             P1.4|<------- A3-: EEG1 negative input --> 54
-
-//                |             P1.7|<------- A2+: EEG2 positive input --> 49 rosa
-//                |             P1.6|<------- A2-: EEG2 negative input --> 50
-
-//                |             P6.3|<------- A1+: EEG3 positive input --> 64 gris
-//                |             P6.4|<------- A1-: EEG3 negative input --> 63
-
-//                |             P6.0|<------- A0+: ECG positive input --> 67 blanco
-//                |             P6.1|<------- A0-: ECG negative input --> 66
-
-//                |             P1.3|<------- A4+: BATT positive input --> 55 azul claro batería
-//                |             P1.2|<------- A4-: BATT negative input --> 56
- 
-//                |                 |
-
-//******************************************************************************
-
+/**
+ * @test UART, SD16 working
+ * @brief Tests that makes sure that the UART is working properly and sends the values read from the SD16 working with structures created for configuring the different modules.
+ *             MSP430FG479
+ *           -----------------
+ *      /|\ |              XIN|---+
+ *       |  |                 |   |
+ *       ---|RST              |   32kHz
+ *          |                 |   |
+ *          |             XOUT|---+
+ *          |             P1.1|--> MCLK = 8Mhz  --> 57 (referencia DCO)
+ *          |             P1.4|--> SMCLK = 8MHz --> 54 (referencia DCO)
+ *          |             P1.5|--> ACLK = 32kHz --> 51
+ *          |                 |
+ *          |             P2.5|<------- Receive Data (UCA0RXD) --> 75
+ *          |             P2.4|-------> Transmit Data (UCA0TXD) --> 76
+ *          |                 |
+ *          |             P1.5|<------- A3+: EEG1 positive input --> 51 
+ *          |             P1.4|<------- A3-: EEG1 negative input --> 54
+ *          |                 |
+ *          |             P1.7|<------- A2+: EEG2 positive input --> 49 
+ *          |             P1.6|<------- A2-: EEG2 negative input --> 50
+ *          |                 | 
+ *          |             P6.3|<------- A1+: EEG3 positive input --> 64 
+ *          |             P6.4|<------- A1-: EEG3 negative input --> 63
+ *          |                 |
+ *          |             P6.0|<------- A0+: ECG positive input --> 67 
+ *          |             P6.1|<------- A0-: ECG negative input --> 66
+ *          |                 |
+ *          |             P1.3|<------- A4+: BATT positive input --> 55 
+ *          |             P1.2|<------- A4-: BATT negative input --> 56
+ *          |                 |
+ * @expected
+ * The pins number 51 and 54 should present signals of the EEG. 
+ * WARNING: IT IS NOT POSSIBLE TO EVALUATE ACLK AT THE SAME TIME: P1.5 CONTAINS THE ACLK TOO
+ */
 #include <msp430.h>
 #include <stdint.h>
 
